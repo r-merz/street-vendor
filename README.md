@@ -1,4 +1,4 @@
-Street Vendor Simulator
+Street Vendor Simulator Demo Using Pygame
 
 Objective: Bike around the city and sell typical Mexican snacks (e.g. paletas, raspados, fruit, esquites, etc) to local community members.  
 
