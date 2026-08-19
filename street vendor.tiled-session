@@ -1,0 +1,90 @@
+{
+    "activeFile": "lvl1.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "": {
+            "scaleInDock": 2.2753
+        },
+        "Doors_Windows.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Icons.tsx": {
+            "scaleInDock": 2.7401,
+            "scaleInEditor": 1
+        },
+        "Props.tsx": {
+            "scaleInDock": 1.8459,
+            "scaleInEditor": 1.4556
+        },
+        "buses_cars.tsx": {
+            "scaleInDock": 1.9296,
+            "scaleInEditor": 3.2132
+        },
+        "grass.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "lvl1.tmx": {
+            "scale": 1.4586,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 257.78143425202256,
+                "y": 164.54134101192926
+            }
+        },
+        "paletero.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "paletero_man.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "road.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.exportedFilePath": "/Users/mercyrangel-lopez/Desktop/street vendor",
+    "last.imagePath": "/Users/mercyrangel-lopez/Downloads/Modern_City_GameKit/PNG",
+    "map.height": 17,
+    "map.lastUsedExportFilter": "CSV files (*.csv)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 32,
+    "openFiles": [
+        "lvl1.tmx",
+        "road.tsx",
+        "grass.tsx",
+        "Doors_Windows.tsx",
+        "Props.tsx",
+        "Icons.tsx",
+        "paletero.tsx",
+        "paletero_man.tsx",
+        "buses_cars.tsx"
+    ],
+    "project": "street vendor.tiled-project",
+    "recentFiles": [
+        "buses_cars.tsx",
+        "paletero_man.tsx",
+        "paletero.tsx",
+        "Icons.tsx",
+        "Props.tsx",
+        "Doors_Windows.tsx",
+        "grass.tsx",
+        "road.tsx",
+        "lvl1.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.margin": 0,
+    "tileset.spacing": 0,
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
