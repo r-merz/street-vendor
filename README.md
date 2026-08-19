@@ -1,11 +1,57 @@
-Street Vendor Simulator Demo Using Pygame
+# Street Vendor
 
-Objective: Bike around the city and sell typical Mexican snacks (e.g. paletas, raspados, fruit, esquites, etc) to local community members.  
+A Python/Pygame game about running a neighborhood snack cart, serving customers, preparing snacks, collecting money, and unlocking new menu items across multiple levels.
 
-Player Actions: Prep snacks, collect payment, restock, start day. Press "L" on your keyboard to see the snacks library. Press "I" to check inventory. 
+## Play the Web Demo
 
-Win Condition: Meet daily quota requirements before the timer runs out!
+[Play Street Vendor in your browser](https://r-merz.github.io/street-vendor/)
 
-Difficulty Progression: Kids are generated in random spots, timer for each day, each day you sell a different type of snack (which requires different prep methods). Restocking takes away from profits!
+## Features
 
-How Students Learn Through Play: Optimization, Business, Functions, Sequencing, Loops, Conditionals, Variables, Arithmetic / Math. 
+- Multiple levels with increasing difficulty
+- Unlockable snacks
+- Customer requests
+- Snack preparation mechanics
+- Inventory and restocking
+- Profit goals and timed levels
+- Snack library with descriptions
+- Web build powered by Pygbag
+
+## Controls
+
+- `WASD` — Move
+- `E` — Interact / collect money
+- `I` — Open inventory
+- `L` — Open snack library
+- `SPACE` — Start a level
+- `N` — Continue to the next level
+- `R` — Restart after a failed level
+
+## Current Level Progression
+
+### Level 1
+- Paletas unlocked
+- Learn basic movement, selling, collecting money, and restocking
+
+### Level 2
+- Esquites unlocked
+- Prepare ingredients in the correct sequence
+
+### Level 3
+- Raspados unlocked
+- Match the customer's requested flavor
+
+## Tech
+
+- Python
+- Pygame / pygame-ce
+- Pygbag
+- GitHub Pages
+- GitHub Actions
+
+## In Progress
+
+- Blockly integration
+- Visual programming mechanics
+- Additional snacks and levels
+- Expanded maps
