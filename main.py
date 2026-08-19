@@ -40,8 +40,9 @@ prep_message = ""
 inventory_msg = ""
 prep_customer = None
 prep_step = 0
-
+print("Loading vendor...")
 player = Player("images/vendor.png", 100, 100)
+print("Vendor loaded")
 tile_kinds = [
     TileKind("lvl1", "images/lvl1.png", False),
 ]
@@ -231,20 +232,22 @@ def spawn_customer():
     )
     customers.append(customer)
 
+print("Loading paleta...")
+paleta_image = pygame.image.load("images/paleta.png").convert_alpha()
+print("Paleta loaded")
+
+print("Loading esquite...")
+esquite_image = pygame.image.load("images/esquite.png").convert_alpha()
+print("Esquite loaded")
+
+print("Loading raspado...")
+raspado_image = pygame.image.load("images/raspado.png").convert_alpha()
+print("Raspado loaded")
 
 snack_icons = {
-    "paleta": pygame.transform.scale(
-        pygame.image.load("images/paleta.png").convert_alpha(),
-        (24, 24)
-    ),  
-    "esquite": pygame.transform.scale(
-        pygame.image.load("images/esquite.png").convert_alpha(),
-        (24, 24)
-    ),  
-    "raspado": pygame.transform.scale(
-        pygame.image.load("images/raspado.png").convert_alpha(), 
-        (24, 24)
-    )
+    "paleta": pygame.transform.scale(paleta_image, (24, 24)),
+    "esquite": pygame.transform.scale(esquite_image, (24, 24)),
+    "raspado": pygame.transform.scale(raspado_image, (24, 24))
 }
 
 def draw_inventory_card(
@@ -428,11 +431,13 @@ def load_level(level_number):
     player.y = 100
 
     # load map 
+    print("Loading map...")
     map = Map(
         level_data["map"], 
         tile_kinds, 
         512
     )
+    print("Map loaded")
 
     # remove existing customers 
     for customer in customers[:]: 
