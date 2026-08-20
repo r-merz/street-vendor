@@ -113,13 +113,19 @@ document
     .getElementById('runButton')
     .addEventListener('click', () => {
         const commands = getCommands(); 
+
+        // store timestamp-based run ID
+        const program = {
+            runId: Date.now(), 
+            commands: commands
+        }; 
         // use local storage to save commands
         localStorage.setItem(
-            'streetVendorCommands', 
-            JSON.stringify(commands) 
+            'streetVendorProgram', 
+            JSON.stringify(program) 
         ); 
         updateCommandOutput(); 
-        console.log('Saved commands:', commands); 
+        console.log('Saved Blockly program:', program); 
         
     }); 
 

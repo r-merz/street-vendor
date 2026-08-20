@@ -9,6 +9,8 @@ from customer import Customer
 import random
 from money import MoneyDrop
 
+import json 
+
 pygame.init()
 font = pygame.font.Font(None, 24)
 title_font = pygame.font.Font(None, 36)
@@ -67,6 +69,7 @@ blockly_command_index = 0
 blockly_running = False 
 blockly_last_command_time = 0
 BLOCKLY_COMMAND_DELAY = 300 # commands no longer executed one frame at a time 
+last_blockly_program = None 
 
 customers = [
 ]
@@ -266,29 +269,39 @@ snack_icons = {
 
 def load_blockly_commands(): 
     global blockly_commands
+    global last_blockly_program
 
     # browser javascript 
     if platform.system() != "Emscripten": 
-        return 
+        return False
     try: 
-        import js 
-        stored = js.localStorage.getItem(
-            "streetVendorCommands"
+        window = platform.window 
+        stored = window.localStorage.getItem(
+            "streetVendorProgram"
         )
-        if stored: 
-            import json 
-            blockly_commands = json.loads(
-                str(stored)
-            )
-            print(
-                "Loaded Blockly commands:", 
-                blockly_commands
-            )
+        if not stored: 
+            return False 
+        stored = str(stored)
+
+        program = json.loads(stored) 
+        run_id = program["runId"]
+        commands = program["commands"]
+
+        if run_id == last_blockly_program: 
+            return False
+        last_blockly_program = run_id 
+        blockly_commands = commands 
+        print(
+            "New Blockly program:", 
+            blockly_commands
+        )
+        return True
     except Exception as error: 
         print(
             "Could not load Blockly commands:", 
             error 
         )
+        return False 
 def draw_inventory_card(
     screen, 
     x, 
@@ -513,6 +526,7 @@ async def main():
     global blockly_running
     global blockly_command_index
     global blockly_last_command_time
+    global last_blockly_program
     pygame.init()
 
     running = True
@@ -681,11 +695,6 @@ async def main():
                 if event.key == pygame.K_l and not inventory_open and not prep_open: 
                     library_open = not library_open
 
-                # test key 
-                if event.key == pygame.K_b: 
-                    load_blockly_commands()
-                    blockly_running = True 
-                    blockly_command_index = 0
             elif event.type == pygame.KEYUP: 
                 input.keys_down.discard(event.key)
             # show coordinates when clicking on screen to determine collision blocks
@@ -701,8 +710,18 @@ async def main():
             and not level_intro_open): # prevent movement while inventory open
                                     # vendor can't drive away while prepping order
             player.update(obstacles) # player stops moving once time runs out 
-
-        if blockly_running: 
+        if load_blockly_commands(): 
+            blockly_command_index = 0
+            blockly_running = True 
+            blockly_last_command_time = 0
+        if(
+            blockly_running
+            and not day_over 
+            and not inventory_open
+            and not prep_open 
+            and not library_open 
+            and not level_intro_open
+        ): 
             current_blockly_time = pygame.time.get_ticks() 
             if(
                 current_blockly_time - blockly_last_command_time
