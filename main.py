@@ -59,12 +59,7 @@ obstacles = [
 ]
 
 # blockly constants 
-blockly_commands = [ # temp test 
-    "up", 
-    "right", 
-    "right", 
-    "down"
-]
+blockly_commands = []
 blockly_command_index = 0
 blockly_running = False 
 blockly_last_command_time = 0
