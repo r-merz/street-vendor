@@ -1,4 +1,4 @@
-name: Build and Deploy Pygame Web
+name: Build and Deploy Street Vendor
 
 on:
   push:
@@ -24,10 +24,28 @@ jobs:
           python-version: "3.11"
 
       - name: Install pygbag
-        run: pip install pygbag
+        run: pip install pygbag==0.9.3
 
-      - name: Build game with pygbag
+      - name: Build Pygame web version
         run: pygbag --build --disable-sound-format-error .
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Blockly dependencies
+        working-directory: blockly
+        run: npm ci
+
+      - name: Build Blockly editor
+        working-directory: blockly
+        run: npm run build
+
+      - name: Copy Blockly build into Pygbag site
+        run: |
+          mkdir -p build/web/blockly
+          cp -R blockly/dist/* build/web/blockly/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

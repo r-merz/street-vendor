@@ -65,3 +65,25 @@ class Player(Sprite):
                     self.y = obstacle.bottom
 
                 player_rect = self.get_rect()
+    # make pygame capable of executing command list 
+    def execute_command(self, command, obstacles): 
+        old_x = self.x
+        old_y = self.y
+        distance = 20
+        if command == "up": 
+            self.y -= distance
+        elif command == "down": 
+            self.y += distance 
+        elif command == "left": 
+            self.x -= distance 
+        elif command == "right": 
+            self.x += distance 
+
+        #collision check / reuse collision system 
+        player_rect = self.get_rect()
+
+        for obstacle in obstacles: 
+            if player_rect.colliderect(obstacle): 
+                self.x = old_x 
+                self.y = old_y 
+                break 
