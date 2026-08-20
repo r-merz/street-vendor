@@ -27,9 +27,40 @@ class Map:
         # set size
         self.tile_size = tile_size
 
-    def draw(self, screen): 
-        for y, row in enumerate(self.tiles): 
-            for x, tile in enumerate(row): 
-                location = (x * self.tile_size, y * self.tile_size)
+    def draw(self, screen):
+
+        # If the map is just one tile,
+        # scale that image to fill the whole game surface.
+        if len(self.tiles) == 1 and len(self.tiles[0]) == 1:
+
+            tile = self.tiles[0][0]
+
+            image = self.tile_kinds[tile].image
+
+            scaled_image = pygame.transform.scale(
+                image,
+                screen.get_size()
+            )
+
+            screen.blit(
+                scaled_image,
+                (0, 0)
+            )
+
+            return
+
+        # Normal tile-map drawing
+        for y, row in enumerate(self.tiles):
+            for x, tile in enumerate(row):
+
+                location = (
+                    x * self.tile_size,
+                    y * self.tile_size
+                )
+
                 image = self.tile_kinds[tile].image
-                screen.blit(image, location)
+
+                screen.blit(
+                    image,
+                    location
+                )

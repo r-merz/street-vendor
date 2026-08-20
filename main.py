@@ -23,8 +23,84 @@ print(pygame.image.get_extended())
 pygame.display.set_caption("Street Vendor")
 SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 600
+
+PANEL_YELLOW = (
+    214,
+    177,
+    79
+)
+
+PANEL_BORDER = (
+    72,
+    50,
+    25
+)
+
+PANEL_HIGHLIGHT = (
+    247,
+    220,
+    132
+)
+
+PANEL_SHADOW = (
+    145,
+    104,
+    45
+)
+
+PANEL_TEXT = (
+    45,
+    32,
+    20
+)
+
+LIBRARY_BG = (
+    235,
+    220,
+    190
+)
+
+LIBRARY_CARD = (
+    250,
+    245,
+    225
+)
+
+LIBRARY_LOCKED = (
+    170,
+    165,
+    145
+)
+
+LIBRARY_BORDER = (
+    80,
+    65,
+    50
+)
+
+LIBRARY_HIGHLIGHT = (
+    255,
+    245,
+    220
+)
+
+LIBRARY_SHADOW = (
+    150,
+    130,
+    100
+)
+
+LIBRARY_TEXT = (
+    45,
+    35,
+    25
+)
+
+GAME_WIDTH = 840
+GAME_HEIGHT = 495
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
-clear_color = (30,150,50)
+game_surface = pygame.Surface((GAME_WIDTH, GAME_HEIGHT))
+clear_color = (20, 40, 25)
 running = True 
 
 # add timer / win/lose condition 
@@ -32,7 +108,7 @@ running = True
 #PROFIT_GOAL = 50
 day_start_time = pygame.time.get_ticks()
 day_over = False
-current_day = 1
+current_day = 0
 
 
 inventory_open = False
@@ -44,18 +120,68 @@ inventory_msg = ""
 prep_customer = None
 prep_step = 0
 print("Loading vendor...")
-player = Player("images/vendor.png", 100, 100)
+PLAYER_START = (
+    300,
+    170
+)
+player = Player("images/vendor.png", PLAYER_START[0], PLAYER_START[1])
 print("Vendor loaded")
 tile_kinds = [
     TileKind("lvl1", "images/lvl1.png", False),
 ]
 
-# temp area player cannot enter 
+# coordinate conversion 
+BASE_MAP_WIDTH = 512
+BASE_MAP_HEIGHT = 512
+
+SCALE_X = GAME_WIDTH / BASE_MAP_WIDTH
+SCALE_Y = GAME_HEIGHT / BASE_MAP_HEIGHT 
+def map_point(x, y): 
+    return(
+        int(x * SCALE_X), 
+        int(y * SCALE_Y)
+    )
+def map_rect(x, y, width, height): 
+    return pygame.Rect(
+        int(x * SCALE_X), 
+        int(y * SCALE_Y), 
+        int(width * SCALE_X), 
+        int(height * SCALE_Y)
+    )
+# Areas the vendor cannot walk through
+# Coordinates are now based directly on the 840x495 game surface.
 obstacles = [
-    pygame.Rect(0, 0, SCREEN_WIDTH, 60),
-    pygame.Rect(0, 170, SCREEN_WIDTH, 60),
-    pygame.Rect(270, 100, 300, 30), 
-    pygame.Rect(450, 80, 100, 200)
+    # Top-left building block
+    pygame.Rect(
+        0,
+        0,
+        265,
+        145
+    ),
+
+    # Top-right building block
+    pygame.Rect(
+        365,
+        0,
+        475,
+        145
+    ),
+
+    # Bottom-left building block
+    pygame.Rect(
+        0,
+        340,
+        265,
+        155
+    ),
+
+    # Bottom-right building block
+    pygame.Rect(
+        395,
+        340,
+        445,
+        155
+    ),
 ]
 
 # blockly constants 
@@ -66,17 +192,46 @@ blockly_last_command_time = 0
 BLOCKLY_COMMAND_DELAY = 300 # commands no longer executed one frame at a time 
 last_blockly_program = None 
 
+# tutorial constants
+tutorial_step = 1
+tutorial_message = "Use blocks to move your vendor."
+
+
 customers = [
 ]
 money_drops = []
 
 customer_spawn_points = [
-    (100,80), 
-    (100,150), 
-    (300,70), 
-    (400,160), 
-    (400,70), 
+    # Upper-left sidewalk
+    (80, 165),
+    (180, 165),
+
+    # Upper-right sidewalk
+    (430, 165),
+    (560, 165),
+    (700, 165),
+
+    # Lower-left sidewalk
+    (80, 315),
+    (180, 315),
+
+    # Lower-right sidewalk
+    (430, 315),
+    (560, 315),
+    (700, 315),
 ]
+
+def point_is_walkable(x, y): 
+    test_rect = pygame.Rect(
+        x,
+        y, 
+        20, 
+        20
+    )
+    for obstacle in obstacles: 
+        if test_rect.colliderect(obstacle): 
+            return False
+    return True 
 
 RESTOCK_COSTS = {
     "paleta": 2, 
@@ -130,12 +285,27 @@ SNACK_DATA = {
 }
 
 LEVEL_DATA = {
+    0: {
+        "map": "maps/start.map", 
+        "goal": 5, 
+        "day_length": None, 
+        "customer_count": 1, 
+        "snacks": ["paleta"], 
+        "timed": False, 
+        "title": "Tutorial", 
+        "description": [
+            "- Learn how to use blocks to move around the neighborhood.", 
+            "- Serve your 1st customer!", 
+            "- Collect the $$ to finish the tutorial."
+        ]
+    }, 
     1: {
         "map": "maps/start.map", 
         "goal": 20, 
         "day_length": 60, 
         "customer_count": 3, 
         "snacks": ["paleta"], 
+        "timed": True, 
         "title": "Getting Started", 
         "description": [
             "- Serve customers around the neighborhood.", 
@@ -149,6 +319,7 @@ LEVEL_DATA = {
         "day_length": 60, 
         "customer_count": 4, 
         "snacks": ["paleta", "esquite"], 
+        "timed": True, 
         "title": "Esquites are now unlocked!", 
         "description":[
             "- Prep ingredients in the correct order.", 
@@ -161,6 +332,7 @@ LEVEL_DATA = {
         "day_length": 60, 
         "customer_count": 5, 
         "snacks": ["paleta", "esquite", "raspado"], 
+        "timed": True, 
         "title": "Raspados are now unlocked!", 
         "description": [
             "- Read each customer's requested flavor.", 
@@ -206,6 +378,78 @@ PREP_STEPS = {
 
 }
 
+
+def draw_pixel_panel(
+    surface,
+    rect,
+    background=(235, 220, 190),
+    border=(55, 45, 35),
+    highlight=(255, 245, 220),
+    shadow=(120, 95, 70)
+):
+    # Outer dark border
+    pygame.draw.rect(
+        surface,
+        border,
+        rect
+    )
+
+    # Shadow layer
+    shadow_rect = pygame.Rect(
+        rect.x + 4,
+        rect.y + 4,
+        rect.width - 4,
+        rect.height - 4
+    )
+
+    pygame.draw.rect(
+        surface,
+        shadow,
+        shadow_rect
+    )
+
+    # Main panel
+    inner_rect = pygame.Rect(
+        rect.x + 4,
+        rect.y + 4,
+        rect.width - 8,
+        rect.height - 8
+    )
+
+    pygame.draw.rect(
+        surface,
+        background,
+        inner_rect
+    )
+
+    # Top highlight
+    pygame.draw.line(
+        surface,
+        highlight,
+        (
+            inner_rect.left + 2,
+            inner_rect.top + 2
+        ),
+        (
+            inner_rect.right - 3,
+            inner_rect.top + 2
+        ),
+        2
+    )
+
+    pygame.draw.line(
+        surface,
+        highlight,
+        (
+            inner_rect.left + 2,
+            inner_rect.top + 2
+        ),
+        (
+            inner_rect.left + 2,
+            inner_rect.bottom - 3
+        ),
+        2
+    )
 # randomly pick location of kid + snack they want
 def spawn_customer(): 
     avaiable_points = []
@@ -219,8 +463,9 @@ def spawn_customer():
             if customer.x == point_x and customer.y == point_y: 
                 occupied = True 
                 break 
-        if not occupied: 
+        if not occupied and point_is_walkable(point_x, point_y): 
             # add to available_points 
+
             avaiable_points.append(point) 
     if len(avaiable_points) == 0: 
         print("No available customer spawn points.")
@@ -327,7 +572,7 @@ def draw_inventory_card(
     # snack icon
     icon_x = x+15
     icon_y = y + (height - icon.get_height()) //2
-    screen.blit(icon, (icon_x, icon_y))
+    game_surface.blit(icon, (icon_x, icon_y))
 
     # snack name 
     name_text = font.render(
@@ -335,7 +580,7 @@ def draw_inventory_card(
         True, 
         (30, 30, 30)
     )
-    screen.blit(
+    game_surface.blit(
         name_text, 
         (x+60, y+12)
     )
@@ -345,7 +590,7 @@ def draw_inventory_card(
         True, 
         (60, 60, 60)
     )
-    screen.blit(
+    game_surface.blit(
         amount_text, 
         (x+60, y+40)
     )
@@ -355,7 +600,7 @@ def draw_inventory_card(
         True, 
         (60, 60, 60)
     )
-    screen.blit(
+    game_surface.blit(
         price_text, 
         (x+180, y+40)
     )
@@ -375,12 +620,12 @@ def draw_inventory_card(
     key_text = font.render(
         str(key), 
         True, 
-        (255, 255, 255)
+        PANEL_TEXT
     )
     key_rect = key_text.get_rect(
         center=button_rect.center
     )
-    screen.blit(key_text, key_rect)
+    game_surface.blit(key_text, key_rect)
 
 def wrap_text(text, font, max_width):
     words = text.split()
@@ -474,8 +719,8 @@ def load_level(level_number):
     day_over = False 
 
     # reset player position 
-    player.x = 100
-    player.y = 100
+
+    player.x, player.y = PLAYER_START
 
     # load map 
     print("Loading map...")
@@ -504,7 +749,35 @@ def start_next_day():
 
     if next_level in LEVEL_DATA: 
         load_level(next_level)
-load_level(1) 
+load_level(0) 
+
+def update_tutorial():
+    global tutorial_step
+    global tutorial_message
+
+    if current_day != 0: 
+        return 
+
+    # player has executed at least 1 blockly command 
+    if tutorial_step == 1: 
+        if blockly_command_index > 0: 
+            tutorial_step = 2
+            tutorial_message = "Move closer to the customer."
+
+    # player is close enough to interact
+    elif tutorial_step == 2: 
+        for customer in customers: 
+            if customer.distance_to(player) <= 50: 
+                tutorial_step = 3
+                tutorial_message = "Serve the customer." 
+                break 
+    # customer has been served
+    elif tutorial_step == 3: 
+        if len(money_drops) > 0: 
+            tutorial_step = 4
+            tutorial_message = "Collect the money."
+
+    # tutorial ends 
 # game loop 
 async def main(): 
     global day_start_time
@@ -522,12 +795,19 @@ async def main():
     global blockly_command_index
     global blockly_last_command_time
     global last_blockly_program
+
+    global tutorial_step
+    global tutorial_message
+
     pygame.init()
 
     running = True
     while running: 
-
-        if day_start_time is None: 
+        if not level_data["timed"]: 
+            # tutorial has no countdown
+            time_left = None 
+        elif day_start_time is None: 
+            
             time_left = DAY_LENGTH # player doesn't lose time while reading intro
 
         else: 
@@ -734,62 +1014,77 @@ async def main():
                 else: 
                     blockly_running = False
         # draw code 
-        screen.fill(clear_color)
-        map.draw(screen)
+        update_tutorial()
+        game_surface.fill(clear_color)
+        map.draw(game_surface)
 
-        # show collision boxes 
-        # for obstacle in obstacles:
-        #     # show collision area for walls/buildings/roads
-        #     # pygame.draw.rect(screen, (255, 0, 0), obstacle, 2)
-        #     # # show player's collision area 
-        #     # pygame.draw.rect(
-        #     #     screen, 
-        #     #     (0, 0, 255), 
-        #     #     player.get_rect(), 
-        #     #     2
-        #     # )
+        # # show collision boxes 
+        # for obstacle in obstacles: 
+        #     pygame.draw.rect(
+        #         game_surface, 
+        #         (255, 0, 0), 
+        #         obstacle, 
+        #         2
+        #     )
+        # pygame.draw.rect(
+        #     game_surface, 
+        #     (0, 0, 255), 
+        #     player.get_rect(), 
+        #     2
+        # )
         for s in sprites: 
-            s.draw(screen)
+            s.draw(game_surface)
         for customer in customers: 
-            customer.draw_request(screen, snack_icons)
+            customer.draw_request(game_surface, snack_icons)
         # add HUD to show profit and inventory on screen 
         profit_text = font.render(
             f"Profit: ${player.profit}", 
             True, 
-            (255, 255, 255)
+            PANEL_TEXT
         )
+        if level_data["timed"]: 
 
-        timer_text = font.render(
-            f"Time: {time_left}", 
-            True, 
-            (255, 255, 255)
-        )
+            timer_text = font.render(
+                f"Time: {time_left}", 
+                True, 
+                PANEL_TEXT
+            )
+        else: 
+            timer_text = font.render(
+                "Tutorial", 
+                True, 
+                PANEL_TEXT
+            )
         paleta_text = font.render(
             f"Paletas: {player.inventory['paleta']}", 
             True, 
-            (255, 255, 255)
+            PANEL_TEXT
         )
 
         esquite_text = font.render(
                 f"Esquites: {player.inventory['esquite']}", 
                 True, 
-                (255, 255, 255)
+                PANEL_TEXT
         )
 
         raspado_text = font.render(
                 f"Raspados: {player.inventory['raspado']}", 
                 True, 
-                (255, 255, 255)
+                PANEL_TEXT
         )
+        if current_day == 0: 
+            day_label = "Tutorial"
+        else: 
+            day_label = f"Day {current_day}"
         day_text = font.render(
-            f"Day {current_day}", 
+            day_label, 
             True, 
-            (255, 255, 255)
+            PANEL_TEXT
         )
         goal_text = font.render(
             f"Goal: ${PROFIT_GOAL}", 
             True, 
-            (255, 255, 255)
+            PANEL_TEXT
         )
         money_nearby = False
         for money in money_drops: 
@@ -798,9 +1093,9 @@ async def main():
                 collect_text = font.render(
                     f"Press E to collect ${money.amount}", 
                     True, 
-                    (255, 255, 255)
+                    PANEL_TEXT
                 )
-                screen.blit(
+                game_surface.blit(
                     collect_text, 
                     (200, 250)
                 )
@@ -827,55 +1122,178 @@ async def main():
                     interact_text = font.render(
                         message, 
                         True, 
-                        (255, 255, 255)
+                        PANEL_TEXT
                     )
-                    screen.blit(interact_text, (100, 250))
+                    game_surface.blit(interact_text, (100, 250))
                     break
                 
         # show results screen 
-        if day_over: 
-            overlay = pygame.Surface((600, 300))
-            overlay.set_alpha(180)
-            overlay.fill((0, 0, 0))
-            screen.blit(overlay, (0,0))
-            if player.profit >= PROFIT_GOAL: 
-                result_text = font.render(
-                    f"Day {current_day} Complete! You reached your goal! c:", 
-                    True, 
-                    (255, 255, 255)
-                )
-                if current_day < max(LEVEL_DATA): 
-                    next_text = font.render(
-                        "Press N for next day", 
-                        True, 
-                        (255, 255, 255)
+        if day_over:
+
+            # Darken the game slightly
+            overlay = pygame.Surface(
+                (GAME_WIDTH, GAME_HEIGHT),
+                pygame.SRCALPHA
+            )
+
+            overlay.fill((0, 0, 0, 110))
+
+            game_surface.blit(
+                overlay,
+                (0, 0)
+            )
+
+
+            # Main result panel
+            result_panel = pygame.Rect(
+                170,
+                110,
+                500,
+                260
+            )
+
+            draw_pixel_panel(
+                game_surface,
+                result_panel,
+                background=LIBRARY_BG,
+                border=LIBRARY_BORDER,
+                highlight=LIBRARY_HIGHLIGHT,
+                shadow=LIBRARY_SHADOW
+            )
+
+
+            # Result message
+            if player.profit >= PROFIT_GOAL:
+
+                if current_day == 0:
+                    result_message = "Tutorial Complete!"
+                else:
+                    result_message = (
+                        f"Level {current_day} Complete!"
                     )
-                else: 
-                    next_text = font.render(
-                        "You have completed all levels!", 
-                        True, 
-                        (255, 255, 255)
-                        )
-            else: 
-                result_text = font.render(
-                    f"Day {current_day} Over! You did not reach the profit goal. :c", 
-                    True, 
-                    (255, 255, 255)
+
+            else:
+                result_message = (
+                    f"Level {current_day} Over!"
                 )
+
+
+            result_text = title_font.render(
+                result_message,
+                True,
+                LIBRARY_TEXT
+            )
+
+            result_rect = result_text.get_rect(
+                center=(
+                    result_panel.centerx,
+                    result_panel.top + 55
+                )
+            )
+
+            game_surface.blit(
+                result_text,
+                result_rect
+            )
+
+
+            # Final profit
             profit_result = font.render(
-                f"Final Profit: ${player.profit}", 
-                True, 
-                (255, 255, 255)
+                f"Final Profit: ${player.profit}",
+                True,
+                LIBRARY_TEXT
             )
-            restart_text = font.render(
-                "Press R to restart", 
-                True, 
-                (255, 255, 255)
+
+            profit_rect = profit_result.get_rect(
+                center=(
+                    result_panel.centerx,
+                    result_panel.top + 110
+                )
             )
-            screen.blit(restart_text, (220, 200))
-            screen.blit(result_text, (120, 120))
-            screen.blit(profit_result, (220, 160))
-            screen.blit(next_text, (200, 250))
+
+            game_surface.blit(
+                profit_result,
+                profit_rect
+            )
+
+
+            # Next / retry instruction
+            if player.profit >= PROFIT_GOAL:
+
+                if current_day == 0:
+                    next_message = (
+                        "Press N to start Level 1"
+                    )
+
+                elif current_day < max(LEVEL_DATA):
+                    next_message = (
+                        "Press N for next level"
+                    )
+
+                else:
+                    next_message = (
+                        "All levels complete!"
+                    )
+
+            else:
+                if player.profit < PROFIT_GOAL: 
+                    restart_text = small_font.render(
+                        "Press R to retry", 
+                        True, 
+                        LIBRARY_TEXT
+                    )
+                restart_rect = restart_text.get_rect(
+                    center=(
+                        result_panel.centerx,
+                        result_panel.bottom - 35 
+                    )
+                )
+                game_surface.blit(
+                    result_text, 
+                    restart_rect
+                )
+                next_message = (
+                    "Press R to retry"
+                )
+
+
+            next_text = font.render(
+                next_message,
+                True,
+                LIBRARY_TEXT
+            )
+
+            next_rect = next_text.get_rect(
+                center=(
+                    result_panel.centerx,
+                    result_panel.top + 165
+                )
+            )
+
+            game_surface.blit(
+                next_text,
+                next_rect
+            )
+
+
+            # Restart instruction
+            restart_text = small_font.render(
+                "Press R to restart",
+                True,
+                LIBRARY_TEXT
+            )
+
+            restart_rect = restart_text.get_rect(
+                center=(
+                    result_panel.centerx,
+                    result_panel.bottom - 35
+                )
+            )
+
+            game_surface.blit(
+                restart_text,
+                restart_rect
+            )
 
         # inventory overlay
         if inventory_open:
@@ -888,7 +1306,7 @@ async def main():
 
             dark_overlay.fill((0, 0, 0, 150))
 
-            screen.blit(dark_overlay, (0, 0))
+            game_surface.blit(dark_overlay, (0, 0))
 
 
             # main inventory window
@@ -901,19 +1319,9 @@ async def main():
                 panel_height
             )
 
-            pygame.draw.rect(
-                screen,
-                (220, 205, 175),
-                panel,
-                border_radius=15
-            )
-
-            pygame.draw.rect(
-                screen,
-                (80, 65, 50),
-                panel,
-                3,
-                border_radius=15
+            draw_pixel_panel(
+                game_surface,  
+                panel
             )
 
 
@@ -924,7 +1332,7 @@ async def main():
                 (45, 35, 25)
             )
 
-            screen.blit(
+            game_surface.blit(
                 title,
                 (95, 40)
             )
@@ -937,7 +1345,7 @@ async def main():
                 (45, 35, 25)
             )
 
-            screen.blit(
+            game_surface.blit(
                 money_text,
                 (390, 47)
             )
@@ -967,10 +1375,10 @@ async def main():
             close_text = small_font.render(
                 "Press I to close",
                 True,
-                (255, 255, 255)
+                PANEL_TEXT
             )
 
-            screen.blit(
+            game_surface.blit(
                 close_text,
                 (10, 275)
             )
@@ -979,9 +1387,9 @@ async def main():
                 message_text = small_font.render(
                     inventory_msg, 
                     True, 
-                    (255, 255, 255)
+                    PANEL_TEXT
                 )
-                screen.blit(
+                game_surface.blit(
                     message_text, 
                     (350, 275)
                 )
@@ -990,25 +1398,48 @@ async def main():
         # left hud background 
         hud_background = pygame.Surface((170, 30), pygame.SRCALPHA)
         hud_background.fill((0,0,0,160))
-        screen.blit(hud_background, (150,5))
+        game_surface.blit(hud_background, (150,5))
 
         # left hud text
-        screen.blit(profit_text, (200, 10))
+        profit_panel = pygame.Rect(
+            150, 
+            5, 
+            170, 
+            32
+        )
+        draw_pixel_panel(
+            game_surface, 
+            profit_panel, 
+            background = PANEL_YELLOW, 
+            border = PANEL_BORDER, 
+            highlight = PANEL_HIGHLIGHT, 
+            shadow = PANEL_SHADOW 
+        )
+        game_surface.blit(profit_text, (175, 11))
 
-        # right hud background 
-        right_hud_background = pygame.Surface((140, 80), pygame.SRCALPHA)
-        right_hud_background.fill((0,0,0,160))
-        screen.blit(right_hud_background, (SCREEN_WIDTH-150,5))
+        # right HUD panel
+        right_panel = pygame.Rect(
+            GAME_WIDTH - 150,
+            5,
+            140,
+            82
+        )
 
+        draw_pixel_panel(
+            game_surface,
+            right_panel,
+            background=PANEL_YELLOW, 
+            border = PANEL_BORDER, 
+            highlight = PANEL_HIGHLIGHT, 
+            shadow = PANEL_SHADOW
+        )
 
-        # right hud text
-        hud_x = SCREEN_WIDTH - 140
-        screen.blit(day_text, (hud_x, 35))
-        screen.blit(goal_text, (hud_x, 60))
-        # screen.blit(paleta_text, (10, 35))
-        # screen.blit(esquite_text, (10, 60))
-        # screen.blit(raspado_text, (10, 85))
-        screen.blit(timer_text, (hud_x, 10))
+        # right HUD text
+        hud_x = GAME_WIDTH - 140
+
+        game_surface.blit(timer_text, (hud_x, 10))
+        game_surface.blit(day_text, (hud_x, 35))
+        game_surface.blit(goal_text, (hud_x, 60))
 
         # snack prep window
         if prep_open and prep_customer is not None:
@@ -1022,7 +1453,7 @@ async def main():
                 pygame.SRCALPHA
             )
             overlay.fill((0, 0, 0, 170))
-            screen.blit(overlay, (0, 0))
+            game_surface.blit(overlay, (0, 0))
 
             # main prep panel
             panel = pygame.Rect(
@@ -1046,7 +1477,7 @@ async def main():
                 (40, 30, 20)
             )
 
-            screen.blit(title, (100, 65))
+            game_surface.blit(title, (100, 65))
 
 
             # =====================================
@@ -1107,13 +1538,13 @@ async def main():
                     (40, 30, 20)
                 )
 
-                screen.blit(step_text, (100, 115))
-                screen.blit(corn_text, (100, 145))
-                screen.blit(mayo_text, (100, 170))
-                screen.blit(cheese_text, (100, 195))
-                screen.blit(tajin_text, (100, 225))
-                screen.blit(limon_text, (100, 250))
-                screen.blit(progress_text, (100, 275))
+                game_surface.blit(step_text, (100, 115))
+                game_surface.blit(corn_text, (100, 145))
+                game_surface.blit(mayo_text, (100, 170))
+                game_surface.blit(cheese_text, (100, 195))
+                game_surface.blit(tajin_text, (100, 225))
+                game_surface.blit(limon_text, (100, 250))
+                game_surface.blit(progress_text, (100, 275))
 
                 if prep_message != "": 
                     error_text = small_font.render(
@@ -1121,8 +1552,8 @@ async def main():
                         True, 
                         (180, 30, 30)
                     )
-                    screen.blit(error_text, (300, 275))
-                #screen.blit(instruction_text, (100, 195))
+                    game_surface.blit(error_text, (300, 275))
+                #game_surface.blit(instruction_text, (100, 195))
 
 
             # =====================================
@@ -1160,11 +1591,11 @@ async def main():
                     (40, 30, 20)
                 )
 
-                screen.blit(request_text, (100, 110))
-                screen.blit(vainilla_text, (100, 140))
-                screen.blit(fresa_text, (100, 165))
-                screen.blit(limon_text, (100, 190))
-                screen.blit(chicle_text, (100, 215))
+                game_surface.blit(request_text, (100, 110))
+                game_surface.blit(vainilla_text, (100, 140))
+                game_surface.blit(fresa_text, (100, 165))
+                game_surface.blit(limon_text, (100, 190))
+                game_surface.blit(chicle_text, (100, 215))
 
                 if prep_message != "":
                     error_text = small_font.render(
@@ -1173,106 +1604,129 @@ async def main():
                         (180, 30, 30)
                     )
 
-                    screen.blit(error_text, (300, 215))
+                    game_surface.blit(error_text, (300, 215))
         # draw snack library 
         if library_open:
 
-            # darken background
+            # Darken background
             dark_overlay = pygame.Surface(
-                screen.get_size(),
+                (GAME_WIDTH, GAME_HEIGHT),
                 pygame.SRCALPHA
             )
 
-            dark_overlay.fill((0, 0, 0, 170))
-            screen.blit(dark_overlay, (0, 0))
+            dark_overlay.fill((0, 0, 0, 120))
 
-            # main library panel
-            library_margin = 40
+            game_surface.blit(
+                dark_overlay,
+                (0, 0)
+            )
+
+
+            # ==============================
+            # MAIN LIBRARY PANEL
+            # ==============================
+
+            library_margin = 30
+
             panel = pygame.Rect(
-                library_margin, 
-                library_margin, 
-                SCREEN_WIDTH - (library_margin * 2), 
-                SCREEN_HEIGHT - (library_margin * 2)
+                library_margin,
+                20,
+                GAME_WIDTH - (library_margin * 2),
+                GAME_HEIGHT - 40
             )
 
-            pygame.draw.rect(
-                screen,
-                (235, 220, 190),
+            draw_pixel_panel(
+                game_surface,
                 panel,
-                border_radius=14
+                background = LIBRARY_BG, 
+                border = LIBRARY_BORDER, 
+                highlight= LIBRARY_HIGHLIGHT, 
+                shadow = LIBRARY_SHADOW
             )
 
-            pygame.draw.rect(
-                screen,
-                (80, 65, 50),
-                panel,
-                3,
-                border_radius=14
-            )
 
+            # Title
             title = title_font.render(
                 "Snacks Library",
                 True,
-                (45, 35, 25)
+                PANEL_TEXT
             )
 
-            screen.blit(title, (70, 70))
+            game_surface.blit(
+                title,
+                (50, 40)
+            )
 
-            # draw snacks
-            snack_names = ["paleta", "esquite", "raspado"]
 
-            card_x = 80
-            card_y = 110 
-            card_width = SCREEN_WIDTH - 160 
+            # ==============================
+            # SNACK CARDS
+            # ==============================
+
+            snack_names = [
+                "paleta",
+                "esquite",
+                "raspado"
+            ]
+
+            card_x = 50
+            card_y = 85
+            card_width = GAME_WIDTH - 100
 
             for snack in snack_names:
 
                 data = SNACK_DATA[snack]
 
-                unlocked = snack in level_data["snacks"]
+                unlocked = (
+                    snack in level_data["snacks"]
+                )
 
                 description_lines = wrap_text(
-                    data["description"], 
-                    small_font, 
-                    card_width - 110
+                    data["description"],
+                    small_font,
+                    card_width - 120
                 )
-                card_height = 90 + (len(description_lines) * 18)
+
+                card_height = (
+                    72
+                    + len(description_lines) * 16
+                )
+
                 card_rect = pygame.Rect(
                     card_x,
-                    card_y, 
-                    card_width, 
+                    card_y,
+                    card_width,
                     card_height
                 )
 
+
+                # Different background for locked snacks
                 if unlocked:
-                    card_color = (250, 245, 225)
-                else:
-                    card_color = (150, 160, 160)
+                    card_background = LIBRARY_CARD
+                else: 
+                    card_background = LIBRARY_LOCKED
 
-                pygame.draw.rect(
-                    screen,
-                    card_color,
+
+                draw_pixel_panel(
+                    game_surface,
                     card_rect,
-                    border_radius=10
+                    background=card_background, 
+                    border=LIBRARY_BORDER, 
+                    highlight=LIBRARY_HIGHLIGHT, 
+                    shadow = LIBRARY_SHADOW
                 )
 
-                pygame.draw.rect(
-                    screen,
-                    (70, 60, 50),
-                    card_rect,
-                    2,
-                    border_radius=10
-                )
 
-                # make locked icons look locked
+                # Snack icon
                 icon = snack_icons[snack].copy()
-                if not unlocked: 
+
+                if not unlocked:
+
                     icon.fill(
-                        (90, 90, 90, 255), 
+                        (100, 100, 100, 255),
                         special_flags=pygame.BLEND_RGBA_MULT
                     )
 
-                screen.blit(
+                game_surface.blit(
                     icon,
                     (
                         card_x + 15,
@@ -1280,14 +1734,15 @@ async def main():
                     )
                 )
 
-                # snack name
+
+                # Snack name
                 name_text = font.render(
                     snack.capitalize(),
                     True,
-                    (40, 30, 20)
+                    LIBRARY_TEXT
                 )
 
-                screen.blit(
+                game_surface.blit(
                     name_text,
                     (
                         card_x + 55,
@@ -1295,79 +1750,109 @@ async def main():
                     )
                 )
 
-                # locked/unlocked
+
+                # Locked / unlocked
                 if unlocked:
                     status = "Unlocked"
-                else: 
-                    status = f"Unlocks Level {data['unlock_level']}"
+
+                else:
+                    status = (
+                        f"Unlocks Level "
+                        f"{data['unlock_level']}"
+                    )
+
                 status_text = small_font.render(
-                    status, 
-                    True, 
-                    (70, 60, 50)
+                    status,
+                    True,
+                    LIBRARY_TEXT
                 )
-                screen.blit(
-                    status_text, 
-                    (card_x + card_width - 140, card_y + 15)
+
+                game_surface.blit(
+                    status_text,
+                    (
+                        card_rect.right
+                        - status_text.get_width()
+                        - 15,
+                        card_y + 15
+                    )
                 )
-                # price
+
+
+                # Sale price
                 price_text = small_font.render(
                     f"Sale price: ${data['sale_price']}",
                     True,
-                    (60, 50, 40)
+                    LIBRARY_TEXT
                 )
 
-                screen.blit(
+                game_surface.blit(
                     price_text,
                     (
                         card_x + 55,
-                        card_y + 40
+                        card_y + 38
                     )
                 )
 
-                # description
-                description_y = card_y + 65
 
-                for line in description_lines: 
-                    description_text = small_font.render(
-                        line, 
-                        True, 
-                        (60, 50, 40)
+                # Description
+                description_y = card_y + 60
+
+                for line in description_lines:
+
+                    description_text = (
+                        small_font.render(
+                            line,
+                            True,
+                            LIBRARY_TEXT
+                        )
                     )
-                    screen.blit(
-                        description_text, 
-                        (card_x + 55, description_y)
+
+                    game_surface.blit(
+                        description_text,
+                        (
+                            card_x + 55,
+                            description_y
+                        )
                     )
 
-                    description_y += 18
+                    description_y += 16
 
-                # automatically move next card down 
-                card_y += card_height + 15
 
+                # Next card
+                card_y += card_height + 8
+
+
+            # Close instruction
             close_text = small_font.render(
                 "Press L to close",
                 True,
-                (255, 255, 255)
+                PANEL_TEXT
             )
 
-            screen.blit(
+            game_surface.blit(
                 close_text,
-                (20, SCREEN_HEIGHT - 30)
+                (
+                    panel.right
+                    - close_text.get_width()
+                    - 15,
+                    panel.bottom - 22
+                )
             )
         if level_intro_open:
 
             overlay = pygame.Surface(
-                screen.get_size(),
+                (GAME_WIDTH, GAME_HEIGHT), 
                 pygame.SRCALPHA
             )
 
-            overlay.fill((0, 0, 0, 190))
-            screen.blit(overlay, (0, 0))
+            overlay.fill((0, 0, 0, 120))
+            game_surface.blit(overlay, (0, 0))
 
             panel_width = 520
             panel_height = 320
 
-            panel_x = (screen.get_width() - panel_width) // 2
-            panel_y = (screen.get_height() - panel_height) // 2
+            panel_x = (GAME_WIDTH - panel_width) // 2
+            panel_y = (GAME_HEIGHT - panel_height) // 2
 
             panel = pygame.Rect(
                 panel_x,
@@ -1376,29 +1861,23 @@ async def main():
                 panel_height
             )
 
-            pygame.draw.rect(
-                screen,
-                (245, 235, 210),
-                panel,
-                border_radius=14
-            )
-
-            pygame.draw.rect(
-                screen,
-                (80, 65, 50),
-                panel,
-                3,
-                border_radius=14
+            draw_pixel_panel(
+                game_surface, 
+                panel 
             )
 
             # level number
+            if current_day == 0: 
+                level_heading = "Tutorial"
+            else: 
+                level_heading = f"Day {current_day}"
             level_text = title_font.render(
-                f"Level {current_day}",
+                level_heading, 
                 True,
                 (45, 35, 25)
             )
 
-            screen.blit(
+            game_surface.blit(
                 level_text,
                 (panel_x + 30, panel_y + 25)
             )
@@ -1410,7 +1889,7 @@ async def main():
                 (45, 35, 25)
             )
 
-            screen.blit(
+            game_surface.blit(
                 intro_title,
                 (panel_x + 30, panel_y + 70)
             )
@@ -1422,7 +1901,7 @@ async def main():
                 (45, 35, 25)
             )
 
-            screen.blit(
+            game_surface.blit(
                 goal_text,
                 (panel_x + 350, panel_y + 30)
             )
@@ -1439,7 +1918,7 @@ async def main():
                 (70, 55, 40)
             )
 
-            screen.blit(
+            game_surface.blit(
                 snacks_text,
                 (panel_x + 30, panel_y + 105)
             )
@@ -1455,7 +1934,7 @@ async def main():
                     (45, 35, 25)
                 )
 
-                screen.blit(
+                game_surface.blit(
                     description_text,
                     (panel_x + 30, description_y)
                 )
@@ -1476,8 +1955,49 @@ async def main():
                 )
             )
 
-            screen.blit(start_text, start_rect)
+            game_surface.blit(start_text, start_rect)
 
+        if current_day == 0 and not level_intro_open and not day_over:
+
+            tutorial_rect = pygame.Rect(
+                190,
+                GAME_HEIGHT - 65,
+                500,
+                50
+            )
+
+            draw_pixel_panel(
+                game_surface,
+                tutorial_rect, 
+                background = PANEL_YELLOW, 
+                border = PANEL_BORDER, 
+                highlight=PANEL_HIGHLIGHT, 
+                shadow = PANEL_SHADOW
+            )
+
+            tutorial_text = font.render(
+                f"Tutorial {tutorial_step}/4: {tutorial_message}",
+                True,
+                PANEL_TEXT
+            )
+
+            text_rect = tutorial_text.get_rect(
+                center=tutorial_rect.center
+            )
+
+            game_surface.blit(
+                tutorial_text,
+                text_rect
+            )
+
+        scaled_game = pygame.transform.scale(
+            game_surface, 
+            (SCREEN_WIDTH, SCREEN_HEIGHT)
+        )
+        screen.blit(
+            scaled_game, 
+            (0, 0)
+        )
         pygame.display.flip()
         #pygame.time.delay(17)
 
