@@ -832,8 +832,24 @@ def execute_serve_command():
                 prep_step = 0 
                 prep_message = ""
                 return 
-        
-    
+# blockly      
+def execute_collect_command(): 
+    for money in money_drops[:]: 
+        if money.distance_to(player) <= 40: 
+            player.profit += money.amount 
+            print(
+                "Blockly collected:", 
+                money.amount 
+            )
+            money.delete()
+            money_drops.remove(
+                money
+            )
+            return 
+    print(
+        "Collect failed:"
+        "no money nearby"
+    )
 # game loop 
 async def main(): 
     global day_start_time
@@ -1065,6 +1081,8 @@ async def main():
                     print("Executing Blockly command:", command)
                     if command == "serve": 
                         execute_serve_command() 
+                    elif command == "collect": 
+                        execute_collect_command()
                     else: 
                         player.execute_command(
                             command, 

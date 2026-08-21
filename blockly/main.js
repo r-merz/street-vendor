@@ -36,6 +36,13 @@ Blockly.common.defineBlocksWithJsonArray([
         previousStatement: null, 
         nextStatement: null, 
         colour: 45 
+    }, 
+    {
+        type: 'collect_money', 
+        message0: 'collect money', 
+        previousStatement: null, 
+        nextStatement: null, 
+        colour: 45 
     }
 ]); 
 
@@ -66,7 +73,12 @@ const toolbox = {
                 {
                     kind: 'block', 
                     type: 'serve_customer'
+                }, 
+                {
+                    kind: 'block', 
+                    type: 'collect_money'
                 }
+
             ]
         }
     ]
@@ -107,6 +119,9 @@ function getCommands(){
             }
             else if (block.type == 'serve_customer'){
                 commands.push('serve'); 
+            }
+            else if (block.type == 'collect_money'){
+                commands.push('collect'); 
             }
             block = block.getNextBlock(); 
         }
