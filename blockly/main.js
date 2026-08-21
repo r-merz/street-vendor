@@ -111,6 +111,10 @@ function getCommands(){
             block = block.getNextBlock(); 
         }
     }
+    console.log(
+        'Generated commands:', 
+        commands
+    )
     return commands; 
 }
 

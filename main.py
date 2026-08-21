@@ -702,39 +702,6 @@ def complete_sale(customer):
     spawn_customer()
 
 
-# game side support 
-def execute_serve_command(): 
-    global prep_open
-    global prep_customer
-    global prep_step 
-    global prep_message
-
-    for customer in customers: 
-        if(
-            not customer.sold
-            and customer.distance_to(player) <= 50 
-
-        ): 
-            snack = customer.wanted_snack 
-            prep_type = SNACK_DATA[snack]["prep_type"]
-
-            if player.inventory[snack] <= 0: 
-                print("Out of", snack)
-                return 
-            elif prep_type == "sequence": 
-                prep_open = True 
-                prep_customer = customer 
-                prep_step = 0
-                prep_message = ""
-                return 
-            elif prep_type == "flavor": 
-                prep_open = True 
-                prep_customer = customer 
-                prep_step = 0 
-                prep_message = ""
-                return 
-    
-
 def load_level(level_number): 
     global current_day
     global level_data
@@ -812,6 +779,61 @@ def update_tutorial():
             tutorial_message = "Collect the money."
 
     # tutorial ends 
+# game side support 
+def execute_serve_command(): 
+    global prep_open
+    global prep_customer
+    global prep_step 
+    global prep_message
+
+    print("Serve command received")
+
+    for customer in customers:
+
+        distance = customer.distance_to(
+            player 
+        ) 
+        print(
+            "Customer distance:", 
+            distance
+        )
+        if(
+            not customer.sold
+            and customer.distance_to(player) <= 50 
+
+        ): 
+            snack = customer.wanted_snack 
+            print(
+                "Serving:", 
+                snack
+            )
+            #prep_type = SNACK_DATA[snack]["prep_type"]
+
+            if player.inventory[snack] <= 0: 
+                print("Out of", snack)
+                return 
+            prep_type = (
+                SNACK_DATA[snack]["prep_type"]
+            )
+            if prep_type == "instant": 
+                complete_sale(
+                    customer
+                )
+                return 
+            elif prep_type == "sequence": 
+                prep_open = True 
+                prep_customer = customer 
+                prep_step = 0
+                prep_message = ""
+                return 
+            elif prep_type == "flavor": 
+                prep_open = True 
+                prep_customer = customer 
+                prep_step = 0 
+                prep_message = ""
+                return 
+        
+    
 # game loop 
 async def main(): 
     global day_start_time
@@ -1040,6 +1062,7 @@ async def main():
             ): 
                 if blockly_command_index < len(blockly_commands):
                     command = blockly_commands[blockly_command_index]
+                    print("Executing Blockly command:", command)
                     if command == "serve": 
                         execute_serve_command() 
                     else: 
