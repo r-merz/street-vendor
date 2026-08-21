@@ -29,6 +29,13 @@ Blockly.common.defineBlocksWithJsonArray([
         previousStatement: null, 
         nextStatement: null, 
         colour: 200
+    }, 
+    {
+        type: 'serve_customer', 
+        message0: 'serve customer', 
+        previousStatement: null, 
+        nextStatement: null, 
+        colour: 45 
     }
 ]); 
 
@@ -55,6 +62,10 @@ const toolbox = {
                 {
                     kind: 'block', 
                     type: 'move_right'
+                }, 
+                {
+                    kind: 'block', 
+                    type: 'serve_customer'
                 }
             ]
         }
@@ -75,6 +86,7 @@ workspace.addChangeListener(() => {
     updateCommandOutput(); 
 }); 
 
+// make blockly generate a command 
 function getCommands(){
     const commands = []; 
     const topBlocks = workspace.getTopBlocks(true); 
@@ -92,6 +104,9 @@ function getCommands(){
             }
             else if (block.type == 'move_right'){
                 commands.push('right'); 
+            }
+            else if (block.type == 'serve_customer'){
+                commands.push('serve'); 
             }
             block = block.getNextBlock(); 
         }

@@ -701,6 +701,40 @@ def complete_sale(customer):
 
     spawn_customer()
 
+
+# game side support 
+def execute_serve_command(): 
+    global prep_open
+    global prep_customer
+    global prep_step 
+    global prep_message
+
+    for customer in customers: 
+        if(
+            not customer.sold
+            and customer.distance_to(player) <= 50 
+
+        ): 
+            snack = customer.wanted_snack 
+            prep_type = SNACK_DATA[snack]["prep_type"]
+
+            if player.inventory[snack] <= 0: 
+                print("Out of", snack)
+                return 
+            elif prep_type == "sequence": 
+                prep_open = True 
+                prep_customer = customer 
+                prep_step = 0
+                prep_message = ""
+                return 
+            elif prep_type == "flavor": 
+                prep_open = True 
+                prep_customer = customer 
+                prep_step = 0 
+                prep_message = ""
+                return 
+    
+
 def load_level(level_number): 
     global current_day
     global level_data
@@ -989,6 +1023,8 @@ async def main():
             blockly_command_index = 0
             blockly_running = True 
             blockly_last_command_time = 0
+
+        # blockly executor 
         if(
             blockly_running
             and not day_over 
@@ -1004,10 +1040,13 @@ async def main():
             ): 
                 if blockly_command_index < len(blockly_commands):
                     command = blockly_commands[blockly_command_index]
-                    player.execute_command(
-                        command, 
-                        obstacles
-                    )
+                    if command == "serve": 
+                        execute_serve_command() 
+                    else: 
+                        player.execute_command(
+                            command, 
+                            obstacles
+                        )
 
                     blockly_command_index += 1
                     blockly_last_command_time = current_blockly_time
@@ -1093,11 +1132,35 @@ async def main():
                 collect_text = font.render(
                     f"Press E to collect ${money.amount}", 
                     True, 
-                    PANEL_TEXT
+                    LIBRARY_TEXT
+                )
+                collect_rect = pygame.Rect(
+                    0, 
+                    0, 
+                    collect_text.get_width() + 36, 
+                    collect_text.get_height() + 20, 
+                )
+
+                collect_rect.center = (
+                    GAME_WIDTH // 2, 
+                    GAME_HEIGHT - 105
+                )
+
+                draw_pixel_panel(
+                    game_surface, 
+                    collect_rect, 
+                    background = LIBRARY_BG, 
+                    border = LIBRARY_BORDER, 
+                    highlight=LIBRARY_HIGHLIGHT, 
+                    shadow=LIBRARY_SHADOW
+                )
+
+                text_rect = collect_text.get_rect(
+                    center=collect_rect.center
                 )
                 game_surface.blit(
                     collect_text, 
-                    (200, 250)
+                    text_rect
                 )
                         
                 break
@@ -1116,15 +1179,39 @@ async def main():
                                 f"Press E - Prepare Raspado de ({customer.flavor})"
                             )
                         else: 
-                            message = f"Press E - Prepare {customer.wanted_snack}"
+                            message = f"Press E - Prepare {customer.wanted_snack.capitalize()}"
                     else: 
                         message = f"Out of {customer.wanted_snack} - Press I to restock"
                     interact_text = font.render(
                         message, 
                         True, 
-                        PANEL_TEXT
+                        LIBRARY_TEXT
                     )
-                    game_surface.blit(interact_text, (100, 250))
+                    padding_x = 18
+                    padding_y = 10 
+                    interact_rect = pygame.Rect(
+                        0, 
+                        0, 
+                        interact_text.get_width() + padding_x * 2, 
+                        interact_text.get_height() + padding_y + 2
+                    )
+                    interact_rect.center = (
+                        GAME_WIDTH // 2, 
+                        GAME_HEIGHT - 105 
+                    )
+
+                    draw_pixel_panel(
+                        game_surface, 
+                        interact_rect, 
+                        background = LIBRARY_BG, 
+                        border=LIBRARY_BORDER, 
+                        highlight=LIBRARY_HIGHLIGHT, 
+                        shadow=LIBRARY_SHADOW
+                    )
+                    text_rect = interact_text.get_rect(
+                        center=interact_rect.center 
+                    )
+                    game_surface.blit(interact_text, text_rect)
                     break
                 
         # show results screen 
@@ -1449,35 +1536,42 @@ async def main():
 
             # darken game behind prep window
             overlay = pygame.Surface(
-                screen.get_size(),
+                (GAME_WIDTH, GAME_HEIGHT), 
                 pygame.SRCALPHA
             )
-            overlay.fill((0, 0, 0, 170))
+            overlay.fill((0, 0, 0, 120))
             game_surface.blit(overlay, (0, 0))
 
             # main prep panel
             panel = pygame.Rect(
+                170,
                 70,
-                40,
-                460,
-                300
+                500,
+                330
             )
 
-            pygame.draw.rect(
-                screen,
-                (245, 235, 210),
-                panel,
-                border_radius=12
+            draw_pixel_panel(
+                game_surface, 
+                panel, 
+                background=LIBRARY_BG, 
+                border=LIBRARY_BORDER, 
+                highlight=LIBRARY_HIGHLIGHT, 
+                shadow=LIBRARY_SHADOW
             )
 
             # title
             title = title_font.render(
                 f"Prepare {snack.capitalize()}",
                 True,
-                (40, 30, 20)
+                LIBRARY_TEXT
             )
-
-            game_surface.blit(title, (100, 65))
+            title_rect = title.get_rect(
+                center=(
+                    panel.centerx, 
+                    panel.top + 40 
+                )
+            )
+            game_surface.blit(title, title_rect)
 
 
             # =====================================
@@ -1488,71 +1582,87 @@ async def main():
                 steps = SNACK_DATA[snack]["steps"]
                 current_step = steps[prep_step]
 
-                step_text = font.render(
-                    f"Next: {current_step['text']}",
-                    True,
-                    (40, 30, 20)
+                instruction = font.render(
+                    f"Next step: {current_step['text']}", 
+                    True, 
+                    LIBRARY_TEXT
+                )
+                game_surface.blit(
+                    instruction, 
+                    (
+                        panel.left + 40, 
+                        panel.top + 85 
+                    )
                 )
 
-                corn_text = font.render(
+                ingredient_labels = [
                     "1 - Agregar elote", 
-                    True, 
-                    (40, 30, 20)
-                )
-
-                mayo_text = font.render(
                     "2 - Agregar mayonesa", 
-                    True, 
-                    (40, 30, 20)
-                )
-
-                cheese_text = font.render(
                     "3 - Agregar queso", 
-                    True, 
-                    (40, 30, 20)
-                )
-
-
-                tajin_text = font.render(
                     "4 - Agregar tajin", 
-                    True, 
-                    (40, 30, 20)
-                )
+                    "5 - Agregar limon"
+                ]
 
-                limon_text = font.render(
-                    "5 - Agregar limon", 
-                    True, 
-                    (40, 30, 20)
-                )
+                y = panel.top + 125 
+
+                for index, label in enumerate(
+                    ingredient_labels
+                ): 
+                    if index < prep_step: 
+                        text_color = (
+                            80, 
+                            120, 
+                            70 
+                        )
+                    elif index == prep_step: 
+                        text_color = LIBRARY_TEXT 
+                    else: 
+                        text_color = (
+                            100, 
+                            90, 
+                            75
+                        )
+                    step_text = font.render(
+                        label, 
+                        True, 
+                        text_color 
+                    )
+                    game_surface.blit(
+                        step_text, 
+                        (
+                            panel.left + 60, 
+                            y
+                        )
+                    )
+                    y += 34
 
 
                 progress_text = small_font.render(
                     f"Step {prep_step + 1} / {len(steps)}",
                     True,
-                    (40, 30, 20)
+                    LIBRARY_TEXT
                 )
 
-                instruction_text = small_font.render(
-                    "Press SPACE to complete this step",
-                    True,
-                    (40, 30, 20)
+                game_surface.blit(
+                    progress_text, 
+                    (
+                        panel.left + 40, 
+                        panel.bottom - 45
+                    )
                 )
-
-                game_surface.blit(step_text, (100, 115))
-                game_surface.blit(corn_text, (100, 145))
-                game_surface.blit(mayo_text, (100, 170))
-                game_surface.blit(cheese_text, (100, 195))
-                game_surface.blit(tajin_text, (100, 225))
-                game_surface.blit(limon_text, (100, 250))
-                game_surface.blit(progress_text, (100, 275))
 
                 if prep_message != "": 
-                    error_text = small_font.render(
+                    error_text = font.render(
                         prep_message, 
                         True, 
-                        (180, 30, 30)
+                        (150, 40, 35)
                     )
-                    game_surface.blit(error_text, (300, 275))
+                    game_surface.blit(error_text, 
+                        (
+                            panel.right - error_text.get_width() - 40, 
+                            panel.bottom - 50
+                        )
+                    )
                 #game_surface.blit(instruction_text, (100, 195))
 
 
@@ -1564,47 +1674,65 @@ async def main():
                 request_text = font.render(
                     f"Customer wants: {prep_customer.flavor}",
                     True,
-                    (40, 30, 20)
+                    LIBRARY_TEXT
                 )
 
-                vainilla_text = font.render(
-                    "1 - Vainilla",
-                    True,
-                    (40, 30, 20)
+                request_rect = request_text.get_rect(
+                    center=(
+                        panel.centerx, 
+                        panel.top + 95 
+                    )
                 )
 
-                fresa_text = font.render(
-                    "2 - Fresa",
-                    True,
-                    (40, 30, 20)
+                game_surface.blit(
+                    request_text, 
+                    request_rect 
                 )
 
-                limon_text = font.render(
-                    "3 - Limon",
-                    True,
-                    (40, 30, 20)
-                )
+                flavors = [
+                    "1 - Vainilla", 
+                    "2 - Fresa", 
+                    "3 - Limon", 
+                    "4 - Chicle Azul"
+                ]
 
-                chicle_text = font.render(
-                    "4 - Chicle Azul",
-                    True,
-                    (40, 30, 20)
-                )
+                y = panel.top + 145 
 
-                game_surface.blit(request_text, (100, 110))
-                game_surface.blit(vainilla_text, (100, 140))
-                game_surface.blit(fresa_text, (100, 165))
-                game_surface.blit(limon_text, (100, 190))
-                game_surface.blit(chicle_text, (100, 215))
-
-                if prep_message != "":
-                    error_text = small_font.render(
-                        prep_message,
-                        True,
-                        (180, 30, 30)
+                for flavor in flavors: 
+                    flavor_text = font.render(
+                        flavor, 
+                        True, 
+                        LIBRARY_TEXT
                     )
 
-                    game_surface.blit(error_text, (300, 215))
+                    flavor_rect = flavor_text.get_rect(
+                        center=(
+                            panel.centerx, 
+                            y 
+                        )
+                    )
+                    game_surface.blit(
+                        flavor_text, 
+                        flavor_rect 
+                    )
+
+                    y += 38
+
+                if prep_message != "":
+                    error_text = font.render(
+                        prep_message,
+                        True,
+                        (150, 40, 35)
+                    )
+
+                    error_rect = error_text.get_rect(
+                        center=(
+                            panel.centerx, 
+                            panel.bottom - 35
+                        )
+                    )
+
+                    game_surface.blit(error_text, error_rect)
         # draw snack library 
         if library_open:
 
