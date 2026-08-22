@@ -861,7 +861,7 @@ def execute_collect_command():
     )
     return False
 
-# reset function 
+# reset blockly button function 
 def reset_current_level(): 
     global blockly_running 
     global blockly_command_index
@@ -900,10 +900,10 @@ def reset_current_level():
         money.delete()
     money_drops.clear() 
 
-    # remove customers
-    for customer in customers[:]: 
-        customer.delete()
-    customers.clear()
+    # # remove customers
+    # for customer in customers[:]: 
+    #     customer.delete()
+    # customers.clear()
 
     # respawn correct number
     for i in range(
