@@ -905,11 +905,11 @@ def reset_current_level():
     #     customer.delete()
     # customers.clear()
 
-    # respawn correct number
-    for i in range(
-        level_data["customer_count"]
-    ):
-        spawn_customer()
+    # # respawn correct number
+    # for i in range(
+    #     level_data["customer_count"]
+    # ):
+    #     spawn_customer()
 
     # close windows 
     prep_open = False
