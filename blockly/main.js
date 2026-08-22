@@ -163,5 +163,20 @@ document
         
     }); 
 
+// reset button 
+document
+    .getElementById('resetButton')
+    .addEventListener('click', () => {
+        const program = {
+            runId: Date.now(), 
+            commands: ['reset']
+        }; 
+        localStorage.setItem(
+            'streetVendorProgram', 
+            JSON.stringify(program)
+        ); 
+        console.log('Reset game:', program); 
+    }); 
+
     
     

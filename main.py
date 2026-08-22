@@ -780,6 +780,8 @@ def update_tutorial():
 
     # tutorial ends 
 # game side support 
+
+# blockly
 def execute_serve_command(): 
     global prep_open
     global prep_customer
@@ -834,8 +836,15 @@ def execute_serve_command():
                 return 
 # blockly      
 def execute_collect_command(): 
+    print("Collect command received")
     for money in money_drops[:]: 
-        if money.distance_to(player) <= 40: 
+        distance = money.distance_to(player)
+        print(
+            "Money distance:", 
+            distance
+        )
+        if distance <= 50: 
+
             player.profit += money.amount 
             print(
                 "Blockly collected:", 
@@ -845,11 +854,87 @@ def execute_collect_command():
             money_drops.remove(
                 money
             )
-            return 
+            return True 
     print(
         "Collect failed:"
         "no money nearby"
     )
+    return False
+
+# reset function 
+def reset_current_level(): 
+    global blockly_running 
+    global blockly_command_index
+    global blockly_last_command_time 
+    global tutorial_step
+    global tutorial_message
+    global prep_open
+    global prep_customer 
+    global prep_step 
+    global prep_message
+
+    global inventory_open
+    global library_open
+
+    global day_over 
+    global day_start_time
+
+    print("Resetting level...")
+
+    # stop Blockly program 
+    blockly_running = False
+    blockly_command_index = 0
+    blockly_last_command_time = 0 
+
+    # reset player 
+    player.x, player.y = PLAYER_START
+    player.profit = 0
+    player.inventory = {
+        "paleta": 3, 
+        "esquite": 3, 
+        "raspado": 3
+    }
+
+    # remove money
+    for money in money_drops[:]: 
+        money.delete()
+    money_drops.clear() 
+
+    # remove customers
+    for customer in customers[:]: 
+        customer.delete()
+    customers.clear()
+
+    # respawn correct number
+    for i in range(
+        level_data["customer_count"]
+    ):
+        spawn_customer()
+
+    # close windows 
+    prep_open = False
+    prep_customer = None 
+    prep_step = 0
+    prep_message = ""
+
+    # reset day 
+
+    day_over = False 
+    if level_data["timed"]: 
+        day_start_time = (
+            pygame.time.get_ticks()
+        )
+    else: 
+        day_start_time = None 
+
+    # reset tutorial 
+    if current_day == 0: 
+        tutorial_step = 1
+        tutorial_message = (
+            "Use blocks to move your vendor."
+        )
+
+    print("Level reset complete")
 # game loop 
 async def main(): 
     global day_start_time
@@ -1079,18 +1164,21 @@ async def main():
                 if blockly_command_index < len(blockly_commands):
                     command = blockly_commands[blockly_command_index]
                     print("Executing Blockly command:", command)
-                    if command == "serve": 
-                        execute_serve_command() 
-                    elif command == "collect": 
-                        execute_collect_command()
+                    if command == "reset": 
+                        reset_current_level()
                     else: 
-                        player.execute_command(
-                            command, 
-                            obstacles
-                        )
+                        if command == "serve": 
+                            execute_serve_command() 
+                        elif command == "collect": 
+                            execute_collect_command()
+                        else: 
+                            player.execute_command(
+                                command, 
+                                obstacles
+                            )
 
-                    blockly_command_index += 1
-                    blockly_last_command_time = current_blockly_time
+                        blockly_command_index += 1
+                        blockly_last_command_time = current_blockly_time
                 else: 
                     blockly_running = False
         # draw code 
