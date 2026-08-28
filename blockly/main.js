@@ -46,22 +46,20 @@ Blockly.common.defineBlocksWithJsonArray([
     }, 
     {
         type: 'repeat_times', 
-        message0: 'repeat %1 times %2 %3', 
+        message0: 'repeat %1 times %2', 
         args0: [
             {
             type: 'field_number', 
             name: 'TIMES', 
             value: 2, 
             min: 1, 
-            max: 10
+            max: 10, 
+            precision: 1
         
             }, 
             {
-            type: 'input_dummy'
-            }, 
-            {   
             type: 'input_statement', 
-            name: 'DO'
+            name: "DO"
             }
         ], 
     previousStatement: null, 
@@ -77,6 +75,7 @@ const toolbox = {
        {
             kind: 'category', 
             name: 'Movement', 
+            colour: '200', 
             contents: [
                 
                 {kind: 'block', type: 'move_up'}, 
@@ -89,6 +88,7 @@ const toolbox = {
        {
             kind: 'category', 
             name: 'Actions', 
+            colour: '45', 
             contents: [
                 {kind: 'block', type: 'serve_customer'}, 
                 {kind: 'block', type: 'collect_money'}
@@ -98,6 +98,7 @@ const toolbox = {
        {
             kind: 'category', 
             name: 'Loops', 
+            colour: '210', 
             contents: [
                 {kind: 'block', type: 'repeat_times'}
             ]
@@ -144,27 +145,27 @@ function updateCommandOutput(){
 function commandsFromBlock(block){
     const commands = []; 
     while(block){
-        if (block.type == 'move_up'){
+        if (block.type === 'move_up'){
             commands.push('up'); 
         }
-        else if (block.type == 'move_down'){
+        else if (block.type === 'move_down'){
             commands.push('down'); 
         }
-        else if (block.type == 'move_left'){
+        else if (block.type === 'move_left'){
             commands.push('left'); 
         }
-        else if (block.type == 'move_right'){
+        else if (block.type === 'move_right'){
             commands.push('right'); 
         }
-        else if (block.type == 'serve_customer'){
+        else if (block.type === 'serve_customer'){
             commands.push('serve'); 
         }
-        else if (block.type == 'collect_money'){
+        else if (block.type === 'collect_money'){
             commands.push('collect'); 
         }
-        else if (block.type == 'repeat_times'){
+        else if (block.type === 'repeat_times'){
             const times = 
-                block.getFieldValue('TIMES'); 
+                Number(block.getFieldValue('TIMES')); 
             const firstChild = 
                 block.getInputTargetBlock('DO'); 
             const innerCommands = 
