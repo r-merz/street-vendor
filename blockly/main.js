@@ -43,6 +43,30 @@ Blockly.common.defineBlocksWithJsonArray([
         previousStatement: null, 
         nextStatement: null, 
         colour: 45 
+    }, 
+    {
+        type: 'repeat_times', 
+        message0: 'repeat 1% times %2 %3', 
+        args0: [
+            {
+            type: 'field_number', 
+            name: 'TIMES', 
+            value: 2, 
+            min: 1, 
+            max: 10
+        
+            }, 
+            {
+            type: 'input_dummy'
+            }, 
+            {   
+            type: 'input_statement', 
+            name: 'DO'
+            }
+        ], 
+    previousStatement: null, 
+    nextStatement: null, 
+    colour: 210 
     }
 ]); 
 
@@ -142,6 +166,47 @@ function updateCommandOutput(){
         `Commands: ${JSON.stringify(commands)}`; 
 }
 
+// recursive section to read nested blocks inside repeat
+function commandsFromBlock(block){
+    const commands = []; 
+    while(block){
+        if (block.type == 'move_up'){
+            commands.push('up'); 
+        }
+        else if (block.type == 'move_down'){
+            commands.push('down'); 
+        }
+        else if (block.type == 'move_left'){
+            commands.push('left'); 
+        }
+        else if (block.type == 'move_right'){
+            commands.push('right'); 
+        }
+        else if (block.type == 'serve_customer'){
+            commands.push('serve'); 
+        }
+        else if (block.type == 'collect_money'){
+            commands.push('collect'); 
+        }
+        else if (block.type == 'repeat_times'){
+            const times = 
+                block.getFieldValue('TIMES'); 
+            const firstChild = 
+                block.getInputTargetBlock('DO'); 
+            const innerCommands = 
+                commandsFromBlock(firstChild); 
+            for (let i = 0; i < times; i++){
+                commands.push(
+                    ...innerCommands 
+                ); 
+            }
+        }
+        block = block.getNextBlock(); 
+
+    }
+    return commands;
+
+}
 // run button handler 
 document
     .getElementById('runButton')
