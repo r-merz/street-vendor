@@ -1169,20 +1169,38 @@ async def main():
                     else: 
                         if isinstance(command, dict):
                             if command.get("type") == "if_customer_nearby": 
+                                print(
+                                    "Checking if customer is nearby..."
+                                )
                                 customer_nearby = False
                                 for customer in customers: 
                                     if customer in customers: 
+                                        distance = customer.distance_to(
+                                            player 
+                                        )
+                                        print(
+                                            "Customer distance:", 
+                                            distance 
+                                        )
                                         if(
                                             not customer.sold
                                             and customer.distance_to(player) <= 50 
                                         ): 
                                             customer_nearby = True 
                                             break 
+                                print(
+                                    "Customer nearby:", 
+                                    customer_nearby
+                                )
                                 if customer_nearby: 
                                     nested_commands = command.get(
                                         "commands", 
                                         []
 
+                                    )
+                                    print(
+                                        "Nested commands:", 
+                                        nested_commands
                                     )
                                     blockly_commands[
                                         blockly_command_index + 1: 
