@@ -1234,7 +1234,7 @@ async def main():
                             if command == "serve": 
                                 execute_serve_command()
                             elif command == "collect": 
-                                execute_serve_command()
+                                execute_collect_command()
                             else: 
                                 player.execute_command(
                                     command, 
