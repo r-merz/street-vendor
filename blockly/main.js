@@ -124,36 +124,14 @@ workspace.addChangeListener(() => {
 
 // make blockly generate a command 
 function getCommands(){
-    const commands = []; 
+    const commands = []
     const topBlocks = workspace.getTopBlocks(true); 
     for (const topBlock of topBlocks){
-        let block = topBlock; 
-        while(block){
-            if (block.type == 'move_up'){
-                commands.push('up'); 
-            }
-            else if (block.type == 'move_down'){
-                commands.push('down');
-            }
-            else if (block.type == 'move_left'){
-                commands.push('left'); 
-            }
-            else if (block.type == 'move_right'){
-                commands.push('right'); 
-            }
-            else if (block.type == 'serve_customer'){
-                commands.push('serve'); 
-            }
-            else if (block.type == 'collect_money'){
-                commands.push('collect'); 
-            }
-            block = block.getNextBlock(); 
-        }
+        commands.push(
+            ...commandsFromBlock(topBlock)
+        ); 
     }
-    console.log(
-        'Generated commands:', 
-        commands
-    )
+    console.log('Generated commands:', commands); 
     return commands; 
 }
 
@@ -242,6 +220,3 @@ document
         ); 
         console.log('Reset game:', program); 
     }); 
-
-    
-    
