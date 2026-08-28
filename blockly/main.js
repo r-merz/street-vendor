@@ -1,5 +1,7 @@
 import * as Blockly from 'blockly';
 
+console.log('NEW CONDITIONS VERSION LOADED'); 
+
 // define movement 
 Blockly.common.defineBlocksWithJsonArray([
     {
@@ -65,8 +67,23 @@ Blockly.common.defineBlocksWithJsonArray([
     previousStatement: null, 
     nextStatement: null, 
     colour: 210 
+    }, 
+    {
+        type: 'if_customer_nearby', 
+        message0: 'if customer nearby %1', 
+        args0: [
+            {
+                type: 'input_statement', 
+                name: 'DO'
+            }, 
+        ], 
+        previousStatement: null, 
+        nextStatement: null, 
+        colour: 120
     }
 ]); 
+
+console.log('Condition block:', Blockly.Blocks['if_customer_nearby']); 
 
 // add blocks to workspace 
 const toolbox = {
@@ -101,6 +118,17 @@ const toolbox = {
             colour: '210', 
             contents: [
                 {kind: 'block', type: 'repeat_times'}
+            ]
+       }, 
+       {
+            kind: 'category', 
+            name: 'Conditions', 
+            colour: '120', 
+            contents: [
+                {
+                    kind: 'block', 
+                    type: 'if_customer_nearby'
+                }
             ]
        }
     ]
@@ -175,6 +203,16 @@ function commandsFromBlock(block){
                     ...innerCommands 
                 ); 
             }
+        }
+        else if (block.type === 'if_customer_nearby'){
+            const firstChild = 
+                block.getInputTargetBlock('DO'); 
+            const innerCommands = 
+                commandsFromBlock(firstChild); 
+            commands.push({
+                type: 'if_customer_nearby', 
+                commands: innerCommands
+            }); 
         }
         block = block.getNextBlock(); 
 
