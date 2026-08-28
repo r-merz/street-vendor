@@ -46,7 +46,7 @@ Blockly.common.defineBlocksWithJsonArray([
     }, 
     {
         type: 'repeat_times', 
-        message0: 'repeat 1% times %2 %3', 
+        message0: 'repeat %1 times %2 %3', 
         args0: [
             {
             type: 'field_number', 
@@ -89,7 +89,7 @@ const toolbox = {
        {
             kind: 'category', 
             name: 'Actions', 
-            contentss: [
+            contents: [
                 {kind: 'block', type: 'serve_customer'}, 
                 {kind: 'block', type: 'collect_money'}
 
@@ -99,7 +99,7 @@ const toolbox = {
             kind: 'category', 
             name: 'Loops', 
             contents: [
-                {kind: 'block', type: repeat_times}
+                {kind: 'block', type: 'repeat_times'}
             ]
        }
     ]
