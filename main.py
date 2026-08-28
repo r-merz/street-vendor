@@ -842,6 +842,7 @@ def execute_serve_command():
 # blockly      
 def execute_collect_command(): 
     print("Collect command received")
+    print("Money drops available:", len(money_drops))
     for money in money_drops[:]: 
         distance = money.distance_to(player)
         print(
