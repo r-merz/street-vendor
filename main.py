@@ -527,8 +527,14 @@ def load_blockly_commands():
         run_id = program["runId"]
         commands = program["commands"]
 
+        # first page load - remember the existing program but do not run it
+        if last_blockly_program is None: 
+            last_blockly_program = run_id
+            return False 
+        # already processed the program 
         if run_id == last_blockly_program: 
             return False
+        # new run-button press 
         last_blockly_program = run_id 
         blockly_commands = commands 
         print(
