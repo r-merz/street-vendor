@@ -526,26 +526,25 @@ def load_blockly_commands():
         program = json.loads(stored) 
         run_id = program["runId"]
         commands = program["commands"]
+        # consume the program so it cannot replay after another refresh 
+        window.localStorage.removeItem(
+            "streetVendorProgram"
+        )
 
-        # first page load - remember the existing program but do not run it
-        if last_blockly_program is None: 
-            last_blockly_program = run_id
-            return False 
-        # already processed the program 
         if run_id == last_blockly_program: 
             return False
-        # new run-button press 
-        last_blockly_program = run_id 
+        last_blockly_program = run_id
         blockly_commands = commands 
+
         print(
             "New Blockly program:", 
             blockly_commands
         )
-        return True
+        return True 
     except Exception as error: 
         print(
             "Could not load Blockly commands:", 
-            error 
+            error
         )
         return False 
 def draw_inventory_card(
@@ -941,6 +940,23 @@ def reset_current_level():
         )
 
     print("Level reset complete")
+
+def clear_old_blockly_program(): 
+    if platform.system() != "Emscripten": 
+        return 
+    try: 
+        window = platform.window 
+        window.localStorage.removeItem(
+            "streeVendorProgram"
+        )
+        print(
+            "Cleared old Blockly program"
+        )
+    except Exception as error: 
+        print(
+            "Could not clear old Blockly program:", 
+            error
+        )
 # game loop 
 async def main(): 
     global day_start_time
@@ -963,6 +979,7 @@ async def main():
     global tutorial_message
 
     pygame.init()
+    clear_old_blockly_program()
 
     running = True
     while running: 
