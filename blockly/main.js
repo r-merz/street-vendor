@@ -74,49 +74,45 @@ Blockly.common.defineBlocksWithJsonArray([
 const toolbox = {
     kind: 'categoryToolbox', 
     contents: [
-        {
+       {
             kind: 'category', 
             name: 'Movement', 
             contents: [
-                {
-                    kind: 'block', 
-                    type: 'move_up'
-                }, 
-                {
-                    kind: 'block', 
-                    type: 'move_down'
-                }, 
-                {
-                    kind: 'block', 
-                    type: 'move_left'
-                }, 
-                {
-                    kind: 'block', 
-                    type: 'move_right'
-                }, 
-                {
-                    kind: 'block', 
-                    type: 'serve_customer'
-                }, 
-                {
-                    kind: 'block', 
-                    type: 'collect_money'
-                }
+                
+                {kind: 'block', type: 'move_up'}, 
+                {kind: 'block', type: 'move_down'}, 
+                {kind: 'block', type: 'move_left'}, 
+                {kind: 'block', type: 'move_right'}, 
+                
+            ]
+       } , 
+       {
+            kind: 'category', 
+            name: 'Actions', 
+            contentss: [
+                {kind: 'block', type: 'serve_customer'}, 
+                {kind: 'block', type: 'collect_money'}
 
             ]
-        }
+       }, 
+       {
+            kind: 'category', 
+            name: 'Loops', 
+            contents: [
+                {kind: 'block', type: repeat_times}
+            ]
+       }
     ]
 }; 
-
 
 // make workspace visible 
 const workspace = Blockly.inject(
     'blocklyDiv', 
     {
         toolbox: toolbox, 
-        trashcan: true 
+        trashcan: true
     }
-); 
+)
 
 workspace.addChangeListener(() => {
     updateCommandOutput(); 
