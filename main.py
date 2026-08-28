@@ -1167,16 +1167,38 @@ async def main():
                     if command == "reset": 
                         reset_current_level()
                     else: 
-                        if command == "serve": 
-                            execute_serve_command() 
-                        elif command == "collect": 
-                            execute_collect_command()
-                        else: 
-                            player.execute_command(
-                                command, 
-                                obstacles
-                            )
+                        if isinstance(command, dict):
+                            if command.get("type") == "if_customer_nearby": 
+                                customer_nearby = False
+                                for customer in customers: 
+                                    if customer in customers: 
+                                        if(
+                                            not customer.sold
+                                            and customer.distance_to(player) <= 50 
+                                        ): 
+                                            customer_nearby = True 
+                                            break 
+                                if customer_nearby: 
+                                    nested_commands = command.get(
+                                        "commands", 
+                                        []
 
+                                    )
+                                    blockly_commands[
+                                        blockly_command_index + 1: 
+                                        blockly_command_index + 1
+
+                                    ] = nested_commands
+                        else: 
+                            if command == "serve": 
+                                execute_serve_command()
+                            elif command == "collect": 
+                                execute_serve_command()
+                            else: 
+                                player.execute_command(
+                                    command, 
+                                    obstacles
+                                )
                         blockly_command_index += 1
                         blockly_last_command_time = current_blockly_time
                 else: 
