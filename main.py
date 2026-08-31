@@ -966,6 +966,10 @@ def reset_current_level():
     global day_over 
     global day_start_time
 
+    global tutorial_feedback
+    global tutorial_run_count 
+    global tutorial_feedback_timer 
+
     print("Resetting level...")
 
     # stop Blockly program 
@@ -1015,11 +1019,18 @@ def reset_current_level():
         day_start_time = None 
 
     # reset tutorial 
-    if current_day == 0: 
+    if current_day == 0:
         tutorial_step = 1
+
         tutorial_message = (
-            "Use blocks to move your vendor."
+            "¡Bienvenido! Construye un programa usando los bloques de la sección "
+            "de Movimiento. Cada bloque representa una instrucción que el paletero "
+            "seguirá. Agrega un bloque de movimiento y presiona Run."
         )
+
+        tutorial_feedback = ""
+        tutorial_run_count = 0
+        tutorial_feedback_timer = 0
 
     print("Level reset complete")
 
@@ -1324,10 +1335,14 @@ async def main():
                                 )
                         blockly_command_index += 1
                         blockly_last_command_time = current_blockly_time
+                        # program has finised 
+                        if blockly_command_index >= len(blockly_commands): 
+                            blockly_running = False
+
+                            if current_day == 0 and not day_over: 
+                                give_tutorial_feedback()
                 else: 
                     blockly_running = False
-                    if current_day == 0 and not day_over: 
-                        give_tutorial_feedback()
         # draw code 
         update_tutorial()
         game_surface.fill(clear_color)
