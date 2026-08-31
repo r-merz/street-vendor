@@ -1018,22 +1018,6 @@ def reset_current_level():
     else: 
         day_start_time = None 
 
-    # reset tutorial 
-    if current_day == 0:
-        tutorial_step = 1
-
-        tutorial_message = (
-            "¡Bienvenido! Construye un programa usando los bloques de la sección "
-            "de Movimiento. Cada bloque representa una instrucción que el paletero "
-            "seguirá. Agrega un bloque de movimiento y presiona Run."
-        )
-
-        tutorial_feedback = ""
-        tutorial_run_count = 0
-        tutorial_feedback_timer = 0
-
-    print("Level reset complete")
-
 def clear_old_blockly_program(): 
     if platform.system() != "Emscripten": 
         return 
