@@ -197,9 +197,14 @@ last_blockly_program = None
 tutorial_step = 1
 tutorial_message = ( 
 "Bienvenido! Construye un progama usando los bloques abajo de la seccion de movimiento. "
-"Cada bloque hace que el paletero se mueva un pazo. "
+"Cada bloque representa una instrucction que el paletero seguira. "
+"Hace que el paletero se mueva a la izquierda, a la derecha, arriba, o hacia abajo. "
 "Intenta agregar un bloque de movimiento, y luego presiona Run. "
 )
+tutorial_feedback = ""
+tutorial_run_count = 0
+tutorial_feedback_counter = 0
+TUTORIAL_FEEDBACK_DURATION = 5000 
 customers = [
 ]
 money_drops = []
@@ -771,22 +776,91 @@ def update_tutorial():
     if tutorial_step == 1: 
         if blockly_command_index > 0: 
             tutorial_step = 2
-            tutorial_message = "Excelente! El paletero hizo lo que quisiste. Ahora agregar mas bloques para guiar al paletero hacia el cliente."
+            tutorial_message = (
+                "Excelente! El paletero hizo lo que quisiste. "
+                "Ahora agregar mas bloques para guiar al paletero hacia el cliente."
+                "Se ejecutan en orden de arriba hacia abajo."
+            )
 
     # player is close enough to interact
     elif tutorial_step == 2: 
         for customer in customers: 
             if customer.distance_to(player) <= 50: 
                 tutorial_step = 3
-                tutorial_message = "Estas lo suficiente cerca para servir al cliente. Ahora agrega un bloque 'Serve the customer' que esta bajo la seccion de Movimiento y presiona Run." 
+                tutorial_message = "Estas lo suficiente cerca para servir al cliente. Ahora necesitas realizar una accion. Agrega un bloque 'Serve the customer' despues de tus bloques de movimento que esta bajo la seccion de Movimiento y presiona Run." 
                 break 
     # customer has been served
     elif tutorial_step == 3: 
         if len(money_drops) > 0: 
             tutorial_step = 4
-            tutorial_message = "El cliente le dejo dinero. Agrega el bloque 'serve customer' bajo la seccion de Movimento y presiona Run."
+            tutorial_message = ("Venta completada! El cliente le dejo dinero. Agrega el bloque 'collect money' bajo la seccion de Movimento para recogerlo y presiona Run."
+            "Los programas pueden combinar movimiento y acciones."
+            )
 
-    # tutorial ends 
+    # tutorial ends
+
+def give_tutorial_feedback():
+    global tutorial_feedback
+    global tutorial_feedback_timer
+    global tutorial_run_count
+
+    if current_day != 0:
+        return
+
+    if day_over:
+        return
+
+    tutorial_run_count += 1
+
+    # Step 1: no movement / ineffective first attempt
+    if tutorial_step == 1:
+        tutorial_feedback = (
+            "Pista: comienza con un bloque de Movimiento. "
+            "Cada bloque mueve al paletero un paso."
+        )
+
+    # Still trying to reach customer
+    elif tutorial_step == 2:
+
+        closest_distance = None
+
+        for customer in customers:
+            distance = customer.distance_to(player)
+
+            if (
+                closest_distance is None
+                or distance < closest_distance
+            ):
+                closest_distance = distance
+
+        if tutorial_run_count >= 3:
+            tutorial_feedback = (
+                "Pista: si necesitas repetir el mismo movimiento muchas veces, "
+                "prueba el bloque Repeat. Así puedes repetir una instrucción "
+                "sin agregar el mismo bloque una y otra vez."
+            )
+        else:
+            tutorial_feedback = (
+                "Todavía no estás suficientemente cerca del cliente. "
+                "Observa dónde terminó el paletero y modifica tus bloques."
+            )
+
+    # Player is near customer but has not served
+    elif tutorial_step == 3:
+        tutorial_feedback = (
+            "Estás cerca del cliente. "
+            "Ahora necesitas una acción: agrega 'serve customer' "
+            "y vuelve a presionar Run."
+        )
+
+    # Money exists but has not been collected
+    elif tutorial_step == 4:
+        tutorial_feedback = (
+            "El dinero todavía está en el suelo. "
+            "Agrega 'collect money' cuando el paletero esté cerca del dinero."
+        )
+
+    tutorial_feedback_timer = pygame.time.get_ticks()
 # game side support 
 
 # blockly
@@ -1252,6 +1326,8 @@ async def main():
                         blockly_last_command_time = current_blockly_time
                 else: 
                     blockly_running = False
+                    if current_day == 0 and not day_over: 
+                        give_tutorial_feedback()
         # draw code 
         update_tutorial()
         game_surface.fill(clear_color)
