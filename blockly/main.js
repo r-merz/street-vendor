@@ -55,7 +55,7 @@ Blockly.common.defineBlocksWithJsonArray([
             name: 'TIMES', 
             value: 2, 
             min: 1, 
-            max: 10, 
+            max: 100, 
             precision: 1
         
             }, 
