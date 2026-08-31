@@ -119,6 +119,7 @@ prep_message = ""
 inventory_msg = ""
 prep_customer = None
 prep_step = 0
+blockly_debug_message = ""
 print("Loading vendor...")
 PLAYER_START = (
     300,
@@ -194,9 +195,11 @@ last_blockly_program = None
 
 # tutorial constants
 tutorial_step = 1
-tutorial_message = "Use blocks to move your vendor."
-
-
+tutorial_message = ( 
+"Bienvenido! Construye un progama usando los bloques abajo de la seccion de movimiento. "
+"Cada bloque hace que el paletero se mueva un pazo. "
+"Intenta agregar un bloque de movimiento, y luego presiona Run. "
+)
 customers = [
 ]
 money_drops = []
@@ -768,20 +771,20 @@ def update_tutorial():
     if tutorial_step == 1: 
         if blockly_command_index > 0: 
             tutorial_step = 2
-            tutorial_message = "Move closer to the customer."
+            tutorial_message = "Excelente! El paletero hizo lo que quisiste. Ahora agregar mas bloques para guiar al paletero hacia el cliente."
 
     # player is close enough to interact
     elif tutorial_step == 2: 
         for customer in customers: 
             if customer.distance_to(player) <= 50: 
                 tutorial_step = 3
-                tutorial_message = "Serve the customer." 
+                tutorial_message = "Estas lo suficiente cerca para servir al cliente. Ahora agrega un bloque 'Serve the customer' que esta bajo la seccion de Movimiento y presiona Run." 
                 break 
     # customer has been served
     elif tutorial_step == 3: 
         if len(money_drops) > 0: 
             tutorial_step = 4
-            tutorial_message = "Collect the money."
+            tutorial_message = "El cliente le dejo dinero. Agrega el bloque 'serve customer' bajo la seccion de Movimento y presiona Run."
 
     # tutorial ends 
 # game side support 
@@ -841,14 +844,18 @@ def execute_serve_command():
                 return 
 # blockly      
 def execute_collect_command(): 
-    print("Collect command received")
-    print("Money drops available:", len(money_drops))
+    global blockly_debug_message
+    blockly_debug_message = (
+        f"Money drops available: {len(money_drops)}"
+    )
+
     for money in money_drops[:]: 
         distance = money.distance_to(player)
-        print(
-            "Money distance:", 
-            distance
+        blockly_debug_message = (
+            f"Money drops: {len(money_drops)} | "
+            f"Distance: {round(distance, 1)}"
         )
+
         if distance <= 50: 
 
             player.profit += money.amount 
@@ -948,7 +955,7 @@ def clear_old_blockly_program():
     try: 
         window = platform.window 
         window.localStorage.removeItem(
-            "streeVendorProgram"
+            "streetVendorProgram"
         )
         print(
             "Cleared old Blockly program"
@@ -2280,36 +2287,44 @@ async def main():
 
         if current_day == 0 and not level_intro_open and not day_over:
 
-            tutorial_rect = pygame.Rect(
-                190,
-                GAME_HEIGHT - 65,
-                500,
-                50
+            tutorial_panel = pygame.Rect(
+                120,
+                325, 
+                600, 
+                150
             )
 
             draw_pixel_panel(
                 game_surface,
-                tutorial_rect, 
+                tutorial_panel, 
                 background = PANEL_YELLOW, 
                 border = PANEL_BORDER, 
                 highlight=PANEL_HIGHLIGHT, 
                 shadow = PANEL_SHADOW
             )
 
-            tutorial_text = font.render(
-                f"Tutorial {tutorial_step}/4: {tutorial_message}",
-                True,
-                PANEL_TEXT
+            tutorial_lines = wrap_text(
+                tutorial_message, 
+                small_font, 
+                tutorial_panel.width - 40
             )
 
-            text_rect = tutorial_text.get_rect(
-                center=tutorial_rect.center
-            )
+            line_y = tutorial_panel.top + 20 
 
-            game_surface.blit(
-                tutorial_text,
-                text_rect
-            )
+            for line in tutorial_lines: 
+                tutorial_text = small_font.render(
+                    line, 
+                    True, 
+                    PANEL_TEXT
+                )
+                game_surface.blit(
+                    tutorial_text, 
+                    (
+                        tutorial_panel.left + 20, 
+                        line_y
+                    )
+                )
+                line_y += 20
 
         scaled_game = pygame.transform.scale(
             game_surface, 
@@ -2319,6 +2334,17 @@ async def main():
             scaled_game, 
             (0, 0)
         )
+
+        if blockly_debug_message: 
+            debug_text = small_font.render(
+                blockly_debug_message, 
+                True, 
+                (255, 255, 255)
+            )
+            game_surface.blit(
+                debug_text, 
+                (10, GAME_HEIGHT - 25)
+            )
         pygame.display.flip()
         #pygame.time.delay(17)
 
