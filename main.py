@@ -2401,6 +2401,33 @@ async def main():
                     )
                 )
                 line_y += 20
+            if tutorial_feedback:
+
+                feedback_lines = wrap_text(
+                    tutorial_feedback,
+                    small_font,
+                    tutorial_panel.width - 40
+                )
+
+                line_y += 8
+
+                for line in feedback_lines:
+
+                    feedback_text = small_font.render(
+                        line,
+                        True,
+                        (120, 60, 20)
+                    )
+
+                    game_surface.blit(
+                        feedback_text,
+                        (
+                            tutorial_panel.left + 20,
+                            line_y
+                        )
+                    )
+
+                    line_y += 20
 
         scaled_game = pygame.transform.scale(
             game_surface, 
