@@ -193,6 +193,9 @@ blockly_last_command_time = 0
 BLOCKLY_COMMAND_DELAY = 300 # commands no longer executed one frame at a time 
 last_blockly_program = None 
 
+blockly_used_repeat = False
+blockly_used_condition = False 
+
 # tutorial constants
 tutorial_step = 1
 tutorial_message = ( 
@@ -518,6 +521,8 @@ snack_icons = {
 def load_blockly_commands(): 
     global blockly_commands
     global last_blockly_program
+    global blockly_used_condition
+    global blockly_used_repeat 
 
     # browser javascript 
     if platform.system() != "Emscripten": 
@@ -534,6 +539,14 @@ def load_blockly_commands():
         program = json.loads(stored) 
         run_id = program["runId"]
         commands = program["commands"]
+        blockly_used_repeat = program.get(
+            "usedRepeat", 
+            False 
+        )
+        blockly_used_condition = program.get(
+            "usedCondition", 
+            False 
+        )
         # consume the program so it cannot replay after another refresh 
         window.localStorage.removeItem(
             "streetVendorProgram"
@@ -804,6 +817,9 @@ def give_tutorial_feedback():
     global tutorial_feedback_timer
     global tutorial_run_count
 
+    global blockly_used_repeat
+    global blockly_used_condition  
+
     if current_day != 0:
         return
 
@@ -822,27 +838,26 @@ def give_tutorial_feedback():
     # Still trying to reach customer
     elif tutorial_step == 2:
 
-        closest_distance = None
+        if blockly_used_repeat:
 
-        for customer in customers:
-            distance = customer.distance_to(player)
+            tutorial_feedback = (
+                "¡Excelente! Usaste Repeat para repetir una instrucción "
+                "sin tener que agregar el mismo bloque muchas veces."
+            )
 
-            if (
-                closest_distance is None
-                or distance < closest_distance
-            ):
-                closest_distance = distance
+        elif tutorial_run_count >= 3:
 
-        if tutorial_run_count >= 3:
             tutorial_feedback = (
                 "Pista: si necesitas repetir el mismo movimiento muchas veces, "
-                "prueba el bloque Repeat. Así puedes repetir una instrucción "
-                "sin agregar el mismo bloque una y otra vez."
+                "prueba el bloque Repeat. Coloca un bloque de movimiento dentro "
+                "de Repeat y elige cuántas veces debe ejecutarse."
             )
+
         else:
+
             tutorial_feedback = (
                 "Todavía no estás suficientemente cerca del cliente. "
-                "Observa dónde terminó el paletero y modifica tus bloques."
+                "Observa dónde terminó el paletero y modifica tu programa."
             )
 
     # Player is near customer but has not served
