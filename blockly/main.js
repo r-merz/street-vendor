@@ -220,6 +220,12 @@ function commandsFromBlock(block){
     return commands;
 
 }
+// tell python whether sutdent used a repeat block 
+function workspaceUsesBlockType(type){
+    return workspace
+    .getAllBlocks(false)
+    .some(block => block.type === type); 
+}
 // run button handler 
 document
     .getElementById('runButton')
@@ -229,7 +235,9 @@ document
         // store timestamp-based run ID
         const program = {
             runId: Date.now(), 
-            commands: commands
+            commands: commands, 
+            usedRepeat: workspaceUsesBlockType('repeat_times'), 
+            usedCondition: workspaceUsesBlockType('if_customer_nearby')
         }; 
         // use local storage to save commands
         localStorage.setItem(
