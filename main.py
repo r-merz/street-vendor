@@ -725,7 +725,9 @@ def complete_sale(customer):
     if customer in customers: 
         customers.remove(customer)
 
-    spawn_customer()
+    # do not spawn another customer during tutorial
+    if current_day != 0: 
+        spawn_customer()
 
 
 def load_level(level_number): 
