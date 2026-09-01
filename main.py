@@ -1001,10 +1001,14 @@ def reset_current_level():
         "raspado": 3
     }
 
-    # remove money
-    for money in money_drops[:]: 
-        money.delete()
-    money_drops.clear() 
+    # remove money but keep during tutorial 
+    if not (
+        current_day == 0
+        and tutorial_step >= 4
+    ): 
+        for money in money_drops[:]: 
+            money.delete()
+        money_drops.clear() 
 
     # # remove customers
     # for customer in customers[:]: 
