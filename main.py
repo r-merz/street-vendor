@@ -123,6 +123,9 @@ paleta_customer = None
 paleta_message = "" 
 paleta_order_open = False 
 
+# Blockly interaction phase: "navigate", "order", or "collect"
+game_phase = "navigate"
+
 blockly_debug_message = ""
 print("Loading vendor...")
 PLAYER_START = (
@@ -746,6 +749,7 @@ def wrap_text(text, font, max_width):
 #     player.y = 100
 
 def complete_sale(customer): 
+    global game_phase
     if player.inventory[customer.wanted_snack] <= 0: 
         return 
     player.inventory[customer.wanted_snack] -= 1
@@ -757,6 +761,7 @@ def complete_sale(customer):
         customer.price
     )
     money_drops.append(money)
+    game_phase = "collect"
     customer.sold = True
     customer.delete()
 
@@ -969,6 +974,7 @@ def execute_serve_command():
     global paleta_customer
     global paleta_message 
     global paleta_order_open
+    global game_phase
 
     print("Serve command received")
 
@@ -1012,6 +1018,7 @@ def execute_serve_command():
                 # first time serving customer 
                 paleta_customer = customer
                 paleta_order_open = True
+                game_phase = "order"
 
                 paleta_message = (
                     f"El cliente quiere una paleta de {customer.flavor}."
@@ -1041,6 +1048,7 @@ def execute_serve_command():
 # blockly      
 def execute_collect_command(): 
     global blockly_debug_message
+    global game_phase
     blockly_debug_message = (
         f"Money drops available: {len(money_drops)}"
     )
@@ -1063,6 +1071,7 @@ def execute_collect_command():
             money_drops.remove(
                 money
             )
+            game_phase = "navigate"
             return True 
     print(
         "Collect failed:"
@@ -1123,6 +1132,7 @@ def reset_current_level():
     global tutorial_feedback
     global tutorial_run_count 
     global tutorial_feedback_timer 
+    global game_phase
 
     print("Resetting level...")
 
@@ -1166,6 +1176,7 @@ def reset_current_level():
     paleta_order_open = False
     paleta_customer = None 
     paleta_message = ""
+    game_phase = "navigate"
 
     # reset day 
 
@@ -1277,6 +1288,7 @@ async def main():
     global tutorial_step
     global tutorial_message
     global tutorial_feedback
+    global game_phase
 
     pygame.init()
     clear_old_blockly_program()
@@ -1457,86 +1469,63 @@ async def main():
             #     print("Mouse:", pygame.mouse.get_pos())
 
         # update code
-        if(
-            not day_over 
-            and not inventory_open 
-            and not prep_open
-            and not library_open
-            and not level_intro_open): # prevent movement while inventory open
-                                    # vendor can't drive away while prepping order
-            player.update(obstacles) # player stops moving once time runs out 
+        # Direct keyboard movement is disabled.
+        # Blockly movement still works through player.execute_command().
         if load_blockly_commands():
 
             blockly_last_command_time = 0
             blockly_command_index = 0
 
             # ==========================================
-            # PHASE 3: sale complete, money is waiting
+            # ORDER PHASE
+            # The customer popup is already open.
+            # A new Run should execute ONLY the flavor
+            # choice, never replay movement.
             # ==========================================
-            if len(money_drops) > 0:
-
-                collect_command = find_collect_command(
-                    blockly_commands
-                )
-
-                if collect_command is not None:
-
-                    # Run ONLY collect.
-                    # Do not replay movement or serve.
-                    blockly_commands = [
-                        collect_command
-                    ]
-
-                    blockly_command_index = 0
-                    blockly_running = True
-
-                else:
-
-                    blockly_running = False
-
-                    tutorial_feedback = (
-                        "La venta está completa. "
-                        "Ahora agrega 'collect money' "
-                        "y presiona Run."
-                    )
-
-
-            # ==========================================
-            # PHASE 2: customer order is already open
-            # ==========================================
-            elif (
-                paleta_order_open
-                and paleta_customer is not None
-            ):
+            if game_phase == "order":
 
                 flavor_command = find_paleta_flavor_command(
                     blockly_commands
                 )
 
-                if flavor_command is not None:
-
-                    # Run ONLY the flavor choice.
-                    # Do not replay movement.
-                    blockly_commands = [
-                        flavor_command
-                    ]
-
+                if flavor_command is None:
+                    blockly_running = False
+                    tutorial_feedback = (
+                        "El pedido esta abierto. "
+                        "Agrega 'choose paleta flavor' con el sabor correcto "
+                        "y presiona Run."
+                    )
+                else:
+                    blockly_commands = [flavor_command]
                     blockly_command_index = 0
                     blockly_running = True
 
-                else:
+            # ==========================================
+            # COLLECT PHASE
+            # The sale is finished and money is waiting.
+            # A new Run should execute ONLY collect.
+            # ==========================================
+            elif game_phase == "collect":
 
+                collect_command = find_collect_command(
+                    blockly_commands
+                )
+
+                if collect_command is None:
                     blockly_running = False
-
                     tutorial_feedback = (
-                        "El pedido está abierto. "
-                        "Agrega 'choose paleta flavor' "
-                        "con el sabor correcto y presiona Run."
+                        "La venta esta completa. "
+                        "Agrega 'collect money' y presiona Run."
                     )
-
+                else:
+                    blockly_commands = [collect_command]
+                    blockly_command_index = 0
+                    blockly_running = True
 
             # ==========================================
-            # PHASE 1: normal navigation / serving
+            # NAVIGATION PHASE
+            # Normal Blockly program: movement, loops,
+            # conditions, and serving.
             # ==========================================
             else:
 
@@ -1544,17 +1533,13 @@ async def main():
                     blockly_used_serve
                     and not blockly_used_condition
                 ):
-
                     blockly_running = False
-
                     tutorial_feedback = (
                         "Antes de servir al cliente, usa "
                         "'if customer nearby'. Coloca "
-                        "'serve customer' dentro de la condición."
+                        "'serve customer' dentro de la condicion."
                     )
-
                 else:
-
                     blockly_running = True
 
         # blockly executor
