@@ -945,6 +945,8 @@ def execute_serve_command():
                 SNACK_DATA[snack]["prep_type"]
             )
             if prep_type == "paleta_flavor": 
+                global paleta_customer
+                global paleta_message 
                 paleta_customer = customer 
                 paleta_message = (
                     f"El cliente quiere una paleta de {customer.flavor}."
@@ -1188,8 +1190,8 @@ async def main():
                                 if player.inventory[snack] <= 0: 
                                     print("Out of", snack)
 
-                                elif prep_type == "instant": 
-                                    complete_sale(customer) 
+                                # elif prep_type == "instant": 
+                                #     complete_sale(customer) 
                                 elif prep_type == "sequence": 
                                     prep_open = True
                                     prep_customer = customer
