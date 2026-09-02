@@ -2525,22 +2525,19 @@ async def main():
                 shadow=LIBRARY_SHADOW
             )
 
-            # temporarily draw the normal customer sprite larger
-            customer_image = pygame.transform.scale(
-                paleta_customer.image,
-                (
-                    110,
-                    110
-                )
+            portrait_text = title_font.render(
+                "Cliente",
+                True,
+                LIBRARY_TEXT
             )
 
-            customer_rect = customer_image.get_rect(
+            portrait_text_rect = portrait_text.get_rect(
                 center=portrait_rect.center
             )
 
             game_surface.blit(
-                customer_image,
-                customer_rect
+                portrait_text,
+                portrait_text_rect
             )
 
             # order text
