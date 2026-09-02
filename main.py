@@ -955,7 +955,7 @@ def execute_serve_command():
                 )
                 print("Waiting for paleta flavor:", customer.flavor)
                 
-                return 
+                return "waiting_for_flavor"
             elif prep_type == "sequence": 
                 prep_open = True 
                 prep_customer = customer 
@@ -1402,7 +1402,9 @@ async def main():
                                 )
                         else: 
                             if command == "serve": 
-                                execute_serve_command()
+                                serve_result = execute_serve_command()
+                                if serve_result == "waiting_for_flavor": 
+                                    blockly_running = False
                             elif command == "collect": 
                                 execute_collect_command()
                             else: 
