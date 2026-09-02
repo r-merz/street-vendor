@@ -539,100 +539,73 @@ snack_icons = {
     "raspado": pygame.transform.scale(raspado_image, (24, 24))
 }
 
-def load_blockly_commands():
+def load_blockly_commands(): 
     global blockly_commands
     global last_blockly_program
     global blockly_used_condition
-    global blockly_used_repeat
-    global blockly_used_serve
+    global blockly_used_repeat 
+    global blockly_used_serve 
 
-    try:
-        window = platform.window
-
-        # IMPORTANT:
-        # Read from the parent page storage.
-        # Blockly and the Pygame iframe both live under combined.html.
-        storage = window.parent.localStorage
-
-        stored = storage.getItem(
+    # browser javascript 
+    if platform.system() != "Emscripten": 
+        return False
+    try: 
+        window = platform.window 
+        stored = window.localStorage.getItem(
             "streetVendorProgram"
         )
-
-        if stored is None:
-            return False
-
+        if not stored: 
+            return False 
         stored = str(stored)
 
-        print(
-            "PYTHON FOUND BLOCKLY PROGRAM:",
-            stored
-        )
+        program = json.loads(stored) 
+        run_id = program["runId"]
+        commands = program["commands"]
 
-        program = json.loads(stored)
-
-        run_id = program.get("runId")
-        commands = program.get(
-            "commands",
-            []
-        )
-
-        # Remove it only after Python successfully reads it.
-        storage.removeItem(
-            "streetVendorProgram"
-        )
-
-        # Reset
-        if commands == ["reset"]:
-            print(
-                "PYTHON RECEIVED RESET"
-            )
-
+        # handle reset immediately 
+        if commands == ['reset']: 
+            print("Reset program received")
             reset_current_level()
+            window.localStorage.removeItem(
+                "streetVendorProgram"
+            )
 
             last_blockly_program = run_id
 
-            return False
-
-        # Ignore the exact same Run event twice.
-        if run_id == last_blockly_program:
-            return False
-
-        last_blockly_program = run_id
-
+            return False 
         blockly_used_repeat = program.get(
-            "usedRepeat",
-            False
+            "usedRepeat", 
+            False 
         )
-
         blockly_used_condition = program.get(
-            "usedCondition",
-            False
+            "usedCondition", 
+            False 
         )
-
         blockly_used_serve = program.get(
-            "usedServe",
-            False
+            "usedServe", 
+            False 
+        )
+        # consume the program so it cannot replay after another refresh 
+        window.localStorage.removeItem(
+            "streetVendorProgram"
         )
 
-        blockly_commands = list(
-            commands
-        )
+        if run_id == last_blockly_program: 
+            return False
+        last_blockly_program = run_id
+        blockly_commands = commands 
 
         print(
-            "PYTHON COMMANDS:",
+            "New Blockly program:", 
             blockly_commands
         )
-
-        return True
-
-    except Exception as error:
-
+        return True 
+    except Exception as error: 
         print(
-            "BLOCKLY BRIDGE ERROR:",
+            "Could not load Blockly commands:", 
             error
         )
-
-        return False
+        return False 
 def draw_inventory_card(
     screen, 
     x, 
@@ -1485,34 +1458,50 @@ async def main():
 
         # update code
         if(
-            not day_over 
-            and not inventory_open 
+            not day_over
+            and not inventory_open
             and not prep_open
             and not library_open
             and not level_intro_open
         ):
             player.update(obstacles)
 
-        if load_blockly_commands(): 
+        # Load a brand-new Blockly Run.
+        # IMPORTANT: every Run starts again at command 0.
+        if load_blockly_commands():
+
             blockly_command_index = 0
-            blockly_running = True 
             blockly_last_command_time = 0
 
-        # blockly executor 
+            if (
+                blockly_used_serve
+                and not blockly_used_condition
+            ):
+                blockly_running = False
+
+                tutorial_feedback = (
+                    "Antes de servir al cliente, usa el bloque "
+                    "'if customer nearby'. Coloca 'serve customer' "
+                    "dentro de la condicion."
+                )
+            else:
+                blockly_running = True
+
+        # blockly executor
         if(
             blockly_running
-            and not day_over 
+            and not day_over
             and not inventory_open
-            and not prep_open 
-            and not library_open 
+            and not prep_open
+            and not library_open
             and not level_intro_open
-        ): 
-            current_blockly_time = pygame.time.get_ticks() 
+        ):
+            current_blockly_time = pygame.time.get_ticks()
 
             if(
                 current_blockly_time - blockly_last_command_time
                 >= BLOCKLY_COMMAND_DELAY
-            ): 
+            ):
                 if blockly_command_index < len(blockly_commands):
 
                     command = blockly_commands[
@@ -1524,24 +1513,29 @@ async def main():
                         command
                     )
 
-                    if command == "reset": 
+                    if command == "reset":
                         reset_current_level()
 
-                    else: 
+                    else:
 
+                        # -------------------------
+                        # Structured Blockly command
+                        # -------------------------
                         if isinstance(command, dict):
 
+                            # if customer nearby
                             if (
                                 command.get("type")
                                 == "if_customer_nearby"
-                            ): 
+                            ):
+
                                 print(
                                     "Checking if customer is nearby..."
                                 )
 
                                 customer_nearby = False
 
-                                for customer in customers: 
+                                for customer in customers:
 
                                     distance = customer.distance_to(
                                         player
@@ -1555,16 +1549,16 @@ async def main():
                                     if(
                                         not customer.sold
                                         and distance <= 50
-                                    ): 
-                                        customer_nearby = True 
-                                        break 
+                                    ):
+                                        customer_nearby = True
+                                        break
 
                                 print(
                                     "Customer nearby:",
                                     customer_nearby
                                 )
 
-                                if customer_nearby: 
+                                if customer_nearby:
 
                                     nested_commands = command.get(
                                         "commands",
@@ -1581,6 +1575,7 @@ async def main():
                                         blockly_command_index + 1
                                     ] = nested_commands
 
+                            # choose paleta flavor
                             elif (
                                 command.get("type")
                                 == "choose_paleta_flavor"
@@ -1594,15 +1589,32 @@ async def main():
                                     flavor
                                 )
 
-                        else: 
+                        # -------------------------
+                        # Simple Blockly command
+                        # -------------------------
+                        else:
 
-                            if command == "serve": 
-                                execute_serve_command()
+                            if command == "serve":
 
-                            elif command == "collect": 
+                                serve_result = execute_serve_command()
+
+                                # This is the OLD behavior:
+                                # first serve opens the popup and pauses.
+                                # When the student presses Run again,
+                                # the whole program starts from command 0,
+                                # so the vendor moves again.
+                                if (
+                                    serve_result
+                                    == "waiting_for_flavor"
+                                ):
+                                    blockly_running = False
+
+                            elif command == "collect":
+
                                 execute_collect_command()
 
-                            else: 
+                            else:
+
                                 player.execute_command(
                                     command,
                                     obstacles
@@ -1614,19 +1626,21 @@ async def main():
                         current_blockly_time
                     )
 
+                    # program finished
                     if (
                         blockly_command_index
                         >= len(blockly_commands)
-                    ): 
+                    ):
+
                         blockly_running = False
 
                         if (
                             current_day == 0
                             and not day_over
-                        ): 
+                        ):
                             give_tutorial_feedback()
 
-                else: 
+                else:
                     blockly_running = False
 
         # draw code 
