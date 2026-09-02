@@ -948,10 +948,8 @@ def execute_serve_command():
                 SNACK_DATA[snack]["prep_type"]
             )
             if prep_type == "paleta_flavor": 
-                global paleta_customer
-                global paleta_message 
-                global paleta_order_open
                 paleta_customer = customer 
+                paleta_order_open = True 
                 paleta_message = (
                     f"El cliente quiere una paleta de {customer.flavor}."
                 )
