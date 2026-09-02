@@ -1507,7 +1507,13 @@ async def main():
                             if command == "serve": 
                                 serve_result = execute_serve_command()
                                 if serve_result == "waiting_for_flavor": 
-                                    blockly_running = False
+                                    blockly_last_command_time = (
+                                        current_blockly_time + 2500 
+                                    )
+                                else: 
+                                    blockly_last_command_time = (
+                                        current_blockly_time
+                                    )
                             elif command == "collect": 
                                 execute_collect_command()
                             else: 
@@ -1516,7 +1522,7 @@ async def main():
                                     obstacles
                                 )
                         blockly_command_index += 1
-                        blockly_last_command_time = current_blockly_time
+                        #blockly_last_command_time = current_blockly_time
                         # program has finised 
                         if blockly_command_index >= len(blockly_commands): 
                             blockly_running = False
