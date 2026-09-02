@@ -561,6 +561,18 @@ def load_blockly_commands():
         program = json.loads(stored) 
         run_id = program["runId"]
         commands = program["commands"]
+
+        # handle reset immediately 
+        if commands == ['reset']: 
+            print("Reset program received")
+            reset_current_level()
+            window.localStorage.removeItem(
+                "streetVendorProgram"
+            )
+
+            last_blockly_program = run_id
+
+            return False 
         blockly_used_repeat = program.get(
             "usedRepeat", 
             False 
@@ -1158,6 +1170,18 @@ def reset_current_level():
     else: 
         day_start_time = None 
 
+    if current_day == 0:
+
+        tutorial_step = 1
+
+        tutorial_message = (
+            "Bienvenido! Construye un programa usando los bloques "
+            "de Movimiento. Cada bloque representa una instrucción "
+            "que el paletero seguirá. Agrega un bloque de movimiento "
+            "y presiona Run."
+        )
+
+        tutorial_feedback = ""
 def clear_old_blockly_program(): 
     if platform.system() != "Emscripten": 
         return 

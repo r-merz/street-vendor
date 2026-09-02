@@ -294,7 +294,10 @@ document
     .addEventListener('click', () => {
         const program = {
             runId: Date.now(), 
-            commands: ['reset']
+            commands: ['reset'], 
+            usedRepeat: false, 
+            usedCondition: false, 
+            usedServe: false
         }; 
         localStorage.setItem(
             'streetVendorProgram', 
