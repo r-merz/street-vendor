@@ -515,7 +515,12 @@ def spawn_customer():
         flavor 
     )
     customers.append(customer)
+print("Loading customer portrait...")
+customer_portrait_image = pygame.image.load(
+    "images/kid3.png"
 
+).convert_alpha()
+print("Customer portrait loaded")
 print("Loading paleta...")
 paleta_image = pygame.image.load("images/paleta.png").convert_alpha()
 print("Paleta loaded")
@@ -2532,21 +2537,19 @@ async def main():
                 shadow=LIBRARY_SHADOW
             )
 
-            portrait_text = title_font.render(
-                "Cliente",
-                True,
-                LIBRARY_TEXT
+            portrait_image = pygame.transform.scale(
+                customer_portrait_image,
+                (120, 120)
             )
 
-            portrait_text_rect = portrait_text.get_rect(
+            portrait_image_rect = portrait_image.get_rect(
                 center=portrait_rect.center
             )
 
             game_surface.blit(
-                portrait_text,
-                portrait_text_rect
+                portrait_image,
+                portrait_image_rect
             )
-
             # order text
             request_label = font.render(
                 "PIDE:",
