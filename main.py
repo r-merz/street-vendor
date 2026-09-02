@@ -539,73 +539,100 @@ snack_icons = {
     "raspado": pygame.transform.scale(raspado_image, (24, 24))
 }
 
-def load_blockly_commands(): 
+def load_blockly_commands():
     global blockly_commands
     global last_blockly_program
     global blockly_used_condition
-    global blockly_used_repeat 
-    global blockly_used_serve 
+    global blockly_used_repeat
+    global blockly_used_serve
 
-    # browser javascript 
-    if platform.system() != "Emscripten": 
-        return False
-    try: 
-        window = platform.window 
-        stored = window.localStorage.getItem(
+    try:
+        window = platform.window
+
+        # IMPORTANT:
+        # Read from the parent page storage.
+        # Blockly and the Pygame iframe both live under combined.html.
+        storage = window.parent.localStorage
+
+        stored = storage.getItem(
             "streetVendorProgram"
         )
-        if not stored: 
-            return False 
+
+        if stored is None:
+            return False
+
         stored = str(stored)
 
-        program = json.loads(stored) 
-        run_id = program["runId"]
-        commands = program["commands"]
+        print(
+            "PYTHON FOUND BLOCKLY PROGRAM:",
+            stored
+        )
 
-        # handle reset immediately 
-        if commands == ['reset']: 
-            print("Reset program received")
-            reset_current_level()
-            window.localStorage.removeItem(
-                "streetVendorProgram"
+        program = json.loads(stored)
+
+        run_id = program.get("runId")
+        commands = program.get(
+            "commands",
+            []
+        )
+
+        # Remove it only after Python successfully reads it.
+        storage.removeItem(
+            "streetVendorProgram"
+        )
+
+        # Reset
+        if commands == ["reset"]:
+            print(
+                "PYTHON RECEIVED RESET"
             )
+
+            reset_current_level()
 
             last_blockly_program = run_id
 
-            return False 
+            return False
+
+        # Ignore the exact same Run event twice.
+        if run_id == last_blockly_program:
+            return False
+
+        last_blockly_program = run_id
+
         blockly_used_repeat = program.get(
-            "usedRepeat", 
-            False 
-        )
-        blockly_used_condition = program.get(
-            "usedCondition", 
-            False 
-        )
-        blockly_used_serve = program.get(
-            "usedServe", 
-            False 
-        )
-        # consume the program so it cannot replay after another refresh 
-        window.localStorage.removeItem(
-            "streetVendorProgram"
+            "usedRepeat",
+            False
         )
 
-        if run_id == last_blockly_program: 
-            return False
-        last_blockly_program = run_id
-        blockly_commands = commands 
+        blockly_used_condition = program.get(
+            "usedCondition",
+            False
+        )
+
+        blockly_used_serve = program.get(
+            "usedServe",
+            False
+        )
+
+        blockly_commands = list(
+            commands
+        )
 
         print(
-            "New Blockly program:", 
+            "PYTHON COMMANDS:",
             blockly_commands
         )
-        return True 
-    except Exception as error: 
+
+        return True
+
+    except Exception as error:
+
         print(
-            "Could not load Blockly commands:", 
+            "BLOCKLY BRIDGE ERROR:",
             error
         )
-        return False 
+
+        return False
 def draw_inventory_card(
     screen, 
     x, 
