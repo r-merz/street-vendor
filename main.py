@@ -114,6 +114,7 @@ current_day = 0
 inventory_open = False
 prep_open = False
 library_open = False
+level_intro_open = True 
 
 prep_message = ""
 inventory_msg = ""
@@ -1559,7 +1560,7 @@ async def main():
                 # sale is complete, do not replay movement or serving
                 # run only collect money command 
                 collect_command = find_collect_command(blockly_commands) 
-                if collect_command is None: 
+                if collect_command is None: # might prevent user from moving 
                     blockly_running = False 
                     tutorial_feedback = (
                         "El dinero esta en el suelo. Agrega 'collect money' y presiona Run." 
@@ -1570,9 +1571,9 @@ async def main():
                     blockly_running = True 
             else:
                 blockly_command_index = 0
-
+                blockly_running = True 
                 if blockly_used_serve and not blockly_used_condition:
-                    blockly_running = False
+                    #blockly_running = False
                     tutorial_feedback = (
                         "Antes de servir al cliente, usa el bloque "
                         "'if customer nearby'. Coloca 'serve customer' "
@@ -1658,7 +1659,10 @@ async def main():
                                 execute_restock_command(command.get("snack"))
                         else: 
                             if command == "serve": 
-                                serve_result = execute_serve_command()
+                                if not blockly_used_condition: 
+                                    blockly_last_command_time = current_blockly_time 
+                                else: 
+                                    serve_result = execute_serve_command()
                                 if serve_result == "waiting_for_flavor": 
                                     blockly_last_command_time = (
                                         current_blockly_time + 2500 
