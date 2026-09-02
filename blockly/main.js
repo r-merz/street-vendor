@@ -47,6 +47,22 @@ Blockly.common.defineBlocksWithJsonArray([
         colour: 45 
     }, 
     {
+        type: 'restock_snack', 
+        message0: 'restock %1' ,
+        args0: [{
+            type: 'field_dropdown', 
+            name: 'SNACK', 
+            options: [
+                ['paleta', 'paleta'], 
+                ['esquite', 'esquite'], 
+                ['raspado', 'raspado']
+            ]
+        }], 
+        previousStatement: null, 
+        nextStatement: null, 
+        colour: 45 
+    }, 
+    {
         type: 'repeat_times', 
         message0: 'repeat %1 times %2', 
         args0: [
@@ -131,7 +147,8 @@ Blockly.common.defineBlocksWithJsonArray([
                     ['elote', 'elote'], 
                     ['mayonesa', 'mayonesa'], 
                     ['tajin', 'tajin'], 
-                    ['limon', 'limon']
+                    ['limon', 'limon'], 
+                    ['queso', 'queso']
                 ]
             }
         ], 
@@ -173,39 +190,17 @@ const toolbox = {
 
             ]
        }, 
+       {kind: 'block', type: 'restock_snack'}, 
        {
             kind: 'category', 
             name: 'Preparation', 
             colour: '20', 
             contents: [
-                {
-                    kind: 'block', 
-                    type: 'choose_paleta_flavor'
-                }
+                {kind: 'block', type: 'choose_paleta_flavor'}, 
+                {kind: 'block', type: 'choose_raspado_flavor'}, 
+                {kind: 'block', type: 'choose_esquite_ingredient'}
             ]
-       },  
-       {
-            kind: 'category', 
-            name: 'Preparation', 
-            colour: '20', 
-            contents: [
-                {
-                    kind: 'block', 
-                    type: 'choose_raspado_flavor'
-                }
-            ]
-       },  
-       {
-            kind: 'category', 
-            name: 'Preparation', 
-            colour: '20', 
-            contents: [
-                {
-                    kind: 'block', 
-                    type: 'choose_esquite_ingredient'
-                }
-            ]
-       },  
+        }, 
        {
             kind: 'category', 
             name: 'Loops', 
@@ -326,11 +321,18 @@ function commandsFromBlock(block){
             }); 
         }
 
-        else if (block.type === 'choose_esquite_ingrient'){
-            const flavor = block.getFieldValue('FLAVOR'); 
+        else if (block.type === 'choose_esquite_ingredient'){
+            const ingredient = block.getFieldValue('FLAVOR'); 
             commands.push({
                 type: 'choose_esquite_ingredient', 
-                flavor: flavor 
+                ingredient: ingredient
+            }); 
+        }
+
+        else if (block.type === 'restock_snack'){
+            commands.push({
+                type: 'restock_snack', 
+                snack: block.getFieldValue('SNACK')
             }); 
         }
         block = block.getNextBlock(); 

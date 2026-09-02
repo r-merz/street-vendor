@@ -123,6 +123,15 @@ paleta_customer = None
 paleta_message = "" 
 paleta_order_open = False 
 
+raspado_customer = None 
+raspado_message = ""
+raspado_order_open = False
+
+esquite_customer = None 
+esquite_message = ""
+esquite_order_open = False 
+esquite_step = 0
+
 blockly_debug_message = ""
 print("Loading vendor...")
 PLAYER_START = (
@@ -378,6 +387,14 @@ RASPADO_FLAVORS = [
     "fresa", 
     "limon", 
     "chicle azul"
+]
+
+ESQUITE_INGREDIENTS = [
+    "elote",
+    "mayonesa",
+    "queso",
+    "tajin",
+    "limon"
 ]
 
 PREP_STEPS = {
@@ -1027,17 +1044,18 @@ def execute_serve_command():
 
                 return "waiting_for_flavor"
             elif prep_type == "sequence": 
-                prep_open = True 
-                prep_customer = customer 
-                prep_step = 0
-                prep_message = ""
-                return 
+                global esquite_customer, esquite_order_open, esquite_step, esquite_message 
+                esquite_customer = customer 
+                esquite_order_open = True 
+                esquite_step = 0 
+                esquite_message = "Agrega los ingrdientes en orden."
+                return "waiting_for_ingredients"
             elif prep_type == "flavor": 
-                prep_open = True 
-                prep_customer = customer 
-                prep_step = 0 
-                prep_message = ""
-                return 
+                global raspado_customer, raspado_order_open, raspado_message 
+                raspado_customer = customer
+                raspado_order_open = True 
+                raspado_message = f"El cliente quiere un raspado de {customer.flavor}."
+                return "waiting_for_flavor"
 # blockly      
 def execute_collect_command(): 
     global blockly_debug_message
@@ -1098,6 +1116,63 @@ def execute_paleta_flavor_command(flavor):
     )
 
     return False
+
+def execute_raspado_flavor_command(flavor):
+    global raspado_customer, raspado_order_open, raspado_message
+
+    if raspado_customer is None:
+        return False
+
+    if flavor == raspado_customer.flavor:
+        complete_sale(raspado_customer)
+        raspado_customer = None
+        raspado_order_open = False
+        raspado_message = ""
+        return True
+
+    raspado_message = (
+        f"Flavor incorrecto. El cliente pidió {raspado_customer.flavor}."
+    )
+    return False
+
+
+def execute_esquite_ingredient_command(ingredient):
+    global esquite_customer, esquite_order_open, esquite_step, esquite_message
+
+    if esquite_customer is None:
+        return False
+
+    expected = ESQUITE_INGREDIENTS[esquite_step]
+
+    if ingredient != expected:
+        esquite_message = f"Incorrecto. Sigue con {expected}."
+        return False
+
+    esquite_step += 1
+
+    if esquite_step == len(ESQUITE_INGREDIENTS):
+        complete_sale(esquite_customer)
+        esquite_customer = None
+        esquite_order_open = False
+        esquite_step = 0
+        esquite_message = ""
+        return True
+
+    esquite_message = f"Correcto. Ahora agrega {ESQUITE_INGREDIENTS[esquite_step]}."
+    return True
+
+
+def execute_restock_command(snack):
+    if snack not in level_data["snacks"]:
+        return False
+
+    cost = RESTOCK_COSTS[snack]
+    if player.profit < cost:
+        return False
+
+    player.profit -= cost
+    player.inventory[snack] += 1
+    return True
 # reset blockly button function 
 def reset_current_level(): 
     global blockly_running 
@@ -1113,6 +1188,15 @@ def reset_current_level():
     global paleta_order_open 
     global paleta_customer
     global paleta_message 
+
+    raspado_customer = None
+    raspado_order_open = False
+    raspado_message = ""
+
+    esquite_customer = None
+    esquite_order_open = False
+    esquite_step = 0
+    esquite_message = ""
 
     global inventory_open
     global library_open
@@ -1503,6 +1587,15 @@ async def main():
                                 execute_paleta_flavor_command(
                                     flavor 
                                 )
+
+                            elif command.get("type") == "choose_raspado_flavor": 
+                                execute_raspado_flavor_command(command.get("flavor"))
+
+                            elif command.get("type") == "choose_esquite_ingredient": 
+                                execute_esquite_ingredient_command(command.get("ingredient"))
+
+                            elif command.get("type") == "restock_snack": 
+                                execute_restock_command(command.get("snack"))
                         else: 
                             if command == "serve": 
                                 serve_result = execute_serve_command()
