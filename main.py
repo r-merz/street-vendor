@@ -119,6 +119,8 @@ prep_message = ""
 inventory_msg = ""
 prep_customer = None
 prep_step = 0
+paleta_customer = None 
+paleta_message = "" 
 blockly_debug_message = ""
 print("Loading vendor...")
 PLAYER_START = (
@@ -254,9 +256,15 @@ RESTOCK_COSTS = {
 SNACK_DATA = {
     "paleta": {
         "sale_price": 5, 
-        "prep_type": "instant", 
+        "prep_type": "paleta_flavor", 
         "unlock_level": 1, 
-        "description": "Un postre congelado hecho de agua o leche en un palillo."
+        "description": "Un postre congelado hecho de agua o leche en un palillo.", 
+        "flavors": [
+            "fresa", 
+            "limon", 
+            "mango", 
+            "tamarindo"
+        ]
     }, 
     "esquite": {
         "sale_price": 7, 
@@ -488,7 +496,12 @@ def spawn_customer():
     snack = random.choice(available_snacks)
     price = SNACK_DATA[snack]["sale_price"]
     flavor = None 
-    if snack == "raspado": 
+    if snack == "paleta": 
+        flavor = random.choice(
+            SNACK_DATA["paleta"]["flavors"]
+        )
+
+    elif snack == "raspado": 
         flavor = random.choice(RASPADO_FLAVORS) 
 
     customer = Customer(
@@ -899,6 +912,8 @@ def execute_serve_command():
     global prep_customer
     global prep_step 
     global prep_message
+    global paleta_customer
+    global paleta_message 
 
     print("Serve command received")
 
@@ -929,10 +944,13 @@ def execute_serve_command():
             prep_type = (
                 SNACK_DATA[snack]["prep_type"]
             )
-            if prep_type == "instant": 
-                complete_sale(
-                    customer
+            if prep_type == "paleta_flavor": 
+                paleta_customer = customer 
+                paleta_message = (
+                    f"El cliente quiere una paleta de {customer.flavor}."
                 )
+                print("Waiting for paleta flavor:", customer.flavor)
+                
                 return 
             elif prep_type == "sequence": 
                 prep_open = True 

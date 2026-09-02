@@ -80,6 +80,25 @@ Blockly.common.defineBlocksWithJsonArray([
         previousStatement: null, 
         nextStatement: null, 
         colour: 120
+    }, 
+    {
+        type: 'choose_paleta_flavor', 
+        message0: 'choose paleta flavor %1', 
+        args0: [
+            {
+                type: 'field_dropdown', 
+                name: 'FLAVOR', 
+                options: [
+                    ['fresa', 'fresa'], 
+                    ['limon', 'limon'], 
+                    ['mango', 'mango']
+                    ['tamarindo', 'tamarindo']
+                ]
+            }
+        ], 
+        previousStatement: null, 
+        nextStatement: null, 
+        colour: 20, 
     }
 ]); 
 
@@ -114,6 +133,17 @@ const toolbox = {
        }, 
        {
             kind: 'category', 
+            name: 'Preparation', 
+            colour: '20', 
+            contents: [
+                {
+                    kind: 'block', 
+                    type: 'choose_paleta_flavor'
+                }
+            ]
+       }, 
+       {
+            kind: 'category', 
             name: 'Loops', 
             colour: '210', 
             contents: [
@@ -130,7 +160,8 @@ const toolbox = {
                     type: 'if_customer_nearby'
                 }
             ]
-       }
+       }, 
+       
     ]
 }; 
 
@@ -212,6 +243,13 @@ function commandsFromBlock(block){
             commands.push({
                 type: 'if_customer_nearby', 
                 commands: innerCommands
+            }); 
+        }
+        else if (block.type === 'choose_paleta_flavor'){
+            const flavor = block.getFieldValue('FLAVOR'); 
+            commands.push({
+                type: 'choose_paleta_flavor', 
+                flavor: flavor 
             }); 
         }
         block = block.getNextBlock(); 
