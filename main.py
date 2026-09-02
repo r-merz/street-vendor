@@ -995,7 +995,33 @@ def execute_collect_command():
         "no money nearby"
     )
     return False
+# choose paleta flavor blockly-python integration 
+def execute_paleta_flavor_command(flavor):
+    global paleta_customer
+    global paleta_message
 
+    if paleta_customer is None:
+        paleta_message = (
+            "No hay un pedido de paleta esperando una selección."
+        )
+        return False
+
+    if flavor == paleta_customer.flavor:
+        paleta_message = (
+            f"¡Correcto! Paleta de {flavor}."
+        )
+
+        complete_sale(paleta_customer)
+
+        paleta_customer = None
+        return True
+
+    paleta_message = (
+        f"Flavor incorrecto. "
+        f"El cliente pidió {paleta_customer.flavor}."
+    )
+
+    return False
 # reset blockly button function 
 def reset_current_level(): 
     global blockly_running 
@@ -1359,6 +1385,12 @@ async def main():
                                         blockly_command_index + 1
 
                                     ] = nested_commands
+
+                            elif command.get("type") == "choose_paleta_flavor": 
+                                flavor = command.get("flavor")
+                                execute_paleta_flavor_command(
+                                    flavor 
+                                )
                         else: 
                             if command == "serve": 
                                 execute_serve_command()
