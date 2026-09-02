@@ -1559,6 +1559,7 @@ async def main():
                                 execute_paleta_flavor_command(
                                     flavor 
                                 )
+                                blockly_last_command_time = current_blockly_time
                         else: 
                             if command == "serve": 
                                 serve_result = execute_serve_command()
