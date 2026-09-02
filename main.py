@@ -1306,7 +1306,7 @@ async def main():
             if event.type == pygame.QUIT: 
                 running = False 
             elif event.type == pygame.KEYDOWN: 
-                input.keys_down.add(event.key)
+                #input.keys_down.add(event.key)
                 if level_intro_open: 
                     if event.key == pygame.K_SPACE: 
                         level_intro_open = False
@@ -1459,6 +1459,15 @@ async def main():
         # update code
         # Direct keyboard movement is disabled.
         # Blockly movement still runs through player.execute_command().
+        # update player movement 
+        if (
+            not day_over 
+            and not inventory_open 
+            and not prep_open 
+            and not library_open 
+            and not level_intro_open 
+        ): 
+            player.update(obstacles) 
         if load_blockly_commands():
 
             blockly_command_index = 0
