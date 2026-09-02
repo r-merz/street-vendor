@@ -1553,6 +1553,7 @@ async def main():
                                         blockly_command_index + 1
 
                                     ] = nested_commands
+                                    blockly_last_command_time = current_blockly_time
 
                             elif command.get("type") == "choose_paleta_flavor": 
                                 flavor = command.get("flavor")
