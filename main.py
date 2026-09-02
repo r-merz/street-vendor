@@ -1234,6 +1234,29 @@ def find_paleta_flavor_command(commands):
                     return found
 
     return None
+
+def find_collect_command(commands):
+
+    for command in commands:
+
+        if command == "collect":
+            return "collect"
+
+        if isinstance(command, dict):
+
+            nested = command.get(
+                "commands",
+                []
+            )
+
+            found = find_collect_command(
+                nested
+            )
+
+            if found is not None:
+                return found
+
+    return None
 # game loop 
 async def main(): 
     global day_start_time
@@ -1449,48 +1472,93 @@ async def main():
         if load_blockly_commands():
 
             blockly_last_command_time = 0
+            blockly_command_index = 0
 
-            # If an order is already open, resume from the first
-            # paleta-flavor command instead of replaying movement.
-            if paleta_order_open and paleta_customer is not None:
-                flavor_command = find_paleta_flavor_command(
-                    blockly_commands 
+            # ==========================================
+            # PHASE 3: sale complete, money is waiting
+            # ==========================================
+            if len(money_drops) > 0:
+
+                collect_command = find_collect_command(
+                    blockly_commands
                 )
-                if flavor_command is not None: 
+
+                if collect_command is not None:
+
+                    # Run ONLY collect.
+                    # Do not replay movement or serve.
                     blockly_commands = [
-                        flavor_command 
+                        collect_command
                     ]
+
                     blockly_command_index = 0
                     blockly_running = True
-                else: 
-                    blockly_running = False 
-                    tutorial_feedback = (
-                        "El pedido esta abierto."
-                        "Agrega 'choose paleta flavor' con el sabor correcto y presiona Run."
-                    )
-                for index, command in enumerate(blockly_commands):
-                    if (
-                        isinstance(command, dict)
-                        and command.get("type") == "choose_paleta_flavor"
-                    ):
-                        blockly_command_index = index
-                        break
 
-                blockly_running = True
+                else:
 
-            else:
-                blockly_command_index = 0
-
-                if blockly_used_serve and not blockly_used_condition:
                     blockly_running = False
 
                     tutorial_feedback = (
-                        "Antes de servir al cliente, usa el bloque "
-                        "'if customer nearby'. Coloca 'serve customer' "
-                        "dentro de la condición."
+                        "La venta está completa. "
+                        "Ahora agrega 'collect money' "
+                        "y presiona Run."
+                    )
+
+
+            # ==========================================
+            # PHASE 2: customer order is already open
+            # ==========================================
+            elif (
+                paleta_order_open
+                and paleta_customer is not None
+            ):
+
+                flavor_command = find_paleta_flavor_command(
+                    blockly_commands
+                )
+
+                if flavor_command is not None:
+
+                    # Run ONLY the flavor choice.
+                    # Do not replay movement.
+                    blockly_commands = [
+                        flavor_command
+                    ]
+
+                    blockly_command_index = 0
+                    blockly_running = True
+
+                else:
+
+                    blockly_running = False
+
+                    tutorial_feedback = (
+                        "El pedido está abierto. "
+                        "Agrega 'choose paleta flavor' "
+                        "con el sabor correcto y presiona Run."
+                    )
+
+
+            # ==========================================
+            # PHASE 1: normal navigation / serving
+            # ==========================================
+            else:
+
+                if (
+                    blockly_used_serve
+                    and not blockly_used_condition
+                ):
+
+                    blockly_running = False
+
+                    tutorial_feedback = (
+                        "Antes de servir al cliente, usa "
+                        "'if customer nearby'. Coloca "
+                        "'serve customer' dentro de la condición."
                     )
 
                 else:
+
                     blockly_running = True
 
         # blockly executor 
