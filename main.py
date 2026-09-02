@@ -1560,8 +1560,9 @@ async def main():
                 # sale is complete, do not replay movement or serving
                 # run only collect money command 
                 collect_command = find_collect_command(blockly_commands) 
+                
                 if collect_command is None: # might prevent user from moving 
-                    blockly_running = False 
+                    #blockly_running = False 
                     tutorial_feedback = (
                         "El dinero esta en el suelo. Agrega 'collect money' y presiona Run." 
                     )
