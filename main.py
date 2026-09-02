@@ -195,6 +195,7 @@ last_blockly_program = None
 
 blockly_used_repeat = False
 blockly_used_condition = False 
+blockly_used_serve = False 
 
 # tutorial constants
 tutorial_step = 1
@@ -523,6 +524,7 @@ def load_blockly_commands():
     global last_blockly_program
     global blockly_used_condition
     global blockly_used_repeat 
+    global blockly_used_serve 
 
     # browser javascript 
     if platform.system() != "Emscripten": 
@@ -545,6 +547,10 @@ def load_blockly_commands():
         )
         blockly_used_condition = program.get(
             "usedCondition", 
+            False 
+        )
+        blockly_used_serve = program.get(
+            "usedServe", 
             False 
         )
         # consume the program so it cannot replay after another refresh 
@@ -839,8 +845,13 @@ def give_tutorial_feedback():
 
     # Still trying to reach customer
     elif tutorial_step == 2:
-
-        if blockly_used_repeat:
+        customer_nearby = any(
+            customer.distance_to(player) <= 50
+            for customer in customers 
+        )
+        if customer_nearby: 
+            tutorial_feedback = ""
+        elif blockly_used_repeat:
 
             tutorial_feedback = (
                 "¡Excelente! Usaste Repeat para repetir una instrucción "
@@ -864,6 +875,8 @@ def give_tutorial_feedback():
 
     # Player is near customer but has not served
     elif tutorial_step == 3:
+        if blockly_used_serve: 
+            tutorial_feedback = ""
         tutorial_feedback = (
             "Estás cerca del cliente. "
             "Ahora necesitas una acción: agrega 'serve customer' "

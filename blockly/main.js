@@ -237,7 +237,8 @@ document
             runId: Date.now(), 
             commands: commands, 
             usedRepeat: workspaceUsesBlockType('repeat_times'), 
-            usedCondition: workspaceUsesBlockType('if_customer_nearby')
+            usedCondition: workspaceUsesBlockType('if_customer_nearby'), 
+            usedServe: workspaceUsesBlockType('serve_customer')
         }; 
         // use local storage to save commands
         localStorage.setItem(
