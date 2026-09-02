@@ -1572,11 +1572,14 @@ async def main():
                                     )
                             elif command == "collect": 
                                 execute_collect_command()
+                                blockly_last_command_time = current_blockly_time
                             else: 
+                                # movement commands: up / down / left / right 
                                 player.execute_command(
                                     command, 
                                     obstacles
                                 )
+                                blockly_last_command_time = current_blockly_time
                         blockly_command_index += 1
                         #blockly_last_command_time = current_blockly_time
                         # program has finised 
