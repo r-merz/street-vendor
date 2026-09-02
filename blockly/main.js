@@ -91,7 +91,7 @@ Blockly.common.defineBlocksWithJsonArray([
                 options: [
                     ['fresa', 'fresa'], 
                     ['limon', 'limon'], 
-                    ['mango', 'mango']
+                    ['mango', 'mango'], 
                     ['tamarindo', 'tamarindo']
                 ]
             }
