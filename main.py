@@ -114,7 +114,6 @@ current_day = 0
 inventory_open = False
 prep_open = False
 library_open = False
-level_intro_open = True 
 
 prep_message = ""
 inventory_msg = ""
@@ -1210,31 +1209,6 @@ def clear_old_blockly_program():
             "Could not clear old Blockly program:", 
             error
         )
-
-def find_paleta_flavor_command(commands):
-
-    for command in commands:
-
-        if isinstance(command, dict):
-
-            if command.get("type") == "choose_paleta_flavor":
-                return command
-
-            if command.get("type") == "if_customer_nearby":
-
-                nested = command.get(
-                    "commands",
-                    []
-                )
-
-                found = find_paleta_flavor_command(
-                    nested
-                )
-
-                if found is not None:
-                    return found
-
-    return None
 # game loop 
 async def main(): 
     global day_start_time
@@ -1447,52 +1421,21 @@ async def main():
             and not level_intro_open): # prevent movement while inventory open
                                     # vendor can't drive away while prepping order
             player.update(obstacles) # player stops moving once time runs out 
-        if load_blockly_commands():
-
+        if load_blockly_commands(): 
+            blockly_command_index = 0
+            #blockly_running = True 
             blockly_last_command_time = 0
 
-            # If an order is already open, resume from the first
-            # paleta-flavor command instead of replaying movement.
-            if paleta_order_open and paleta_customer is not None:
-                flavor_command = find_paleta_flavor_command(
-                    blockly_commands 
+            # serving requires an if-customer-nearby condition 
+            if blockly_used_serve and not blockly_used_condition: 
+                blockly_running = False
+                tutorial_feedback = (
+                    "Antes de servir al cleinte, usa el bloque "
+                    "'if customer nearby'. Coloca 'serve customer' "
+                    "dentro de la condicion."
                 )
-                if flavor_command is not None: 
-                    blockly_commands = [
-                        flavor_command 
-                    ]
-                    blockly_command_index = 0
-                    blockly_running = True
-                else: 
-                    blockly_running = False 
-                    tutorial_feedback = (
-                        "El pedido esta abierto."
-                        "Agrega 'choose paleta flavor' con el sabor correcto y presiona Run."
-                    )
-                for index, command in enumerate(blockly_commands):
-                    if (
-                        isinstance(command, dict)
-                        and command.get("type") == "choose_paleta_flavor"
-                    ):
-                        blockly_command_index = index
-                        break
-
-                blockly_running = True
-
-            else:
-                blockly_command_index = 0
-
-                if blockly_used_serve and not blockly_used_condition:
-                    blockly_running = False
-
-                    tutorial_feedback = (
-                        "Antes de servir al cliente, usa el bloque "
-                        "'if customer nearby'. Coloca 'serve customer' "
-                        "dentro de la condición."
-                    )
-
-                else:
-                    blockly_running = True
+            else: 
+                blockly_running = True 
 
         # blockly executor 
         if(
@@ -1554,14 +1497,12 @@ async def main():
                                         blockly_command_index + 1
 
                                     ] = nested_commands
-                                    blockly_last_command_time = current_blockly_time
 
                             elif command.get("type") == "choose_paleta_flavor": 
                                 flavor = command.get("flavor")
                                 execute_paleta_flavor_command(
                                     flavor 
                                 )
-                                blockly_last_command_time = current_blockly_time
                         else: 
                             if command == "serve": 
                                 serve_result = execute_serve_command()
@@ -1575,14 +1516,11 @@ async def main():
                                     )
                             elif command == "collect": 
                                 execute_collect_command()
-                                blockly_last_command_time = current_blockly_time
                             else: 
-                                # movement commands: up / down / left / right 
                                 player.execute_command(
                                     command, 
                                     obstacles
                                 )
-                                blockly_last_command_time = current_blockly_time
                         blockly_command_index += 1
                         #blockly_last_command_time = current_blockly_time
                         # program has finised 
