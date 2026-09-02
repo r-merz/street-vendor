@@ -1311,6 +1311,21 @@ def find_paleta_flavor_command(commands):
                 return found
 
     return None
+
+def find_collect_command(commands):
+    for command in commands:
+        if command == "collect":
+            return command
+
+        if isinstance(command, dict):
+            if command.get("type") == "if_customer_nearby":
+                found = find_collect_command(
+                    command.get("commands", [])
+                )
+                if found is not None:
+                    return found
+
+    return None
 async def main(): 
     global day_start_time
     global day_over
@@ -1540,7 +1555,19 @@ async def main():
                     blockly_commands = [flavor_command]
                     blockly_command_index = 0
                     blockly_running = True
-
+            elif money_drops: 
+                # sale is complete, do not replay movement or serving
+                # run only collect money command 
+                collect_command = find_collect_command(blockly_commands) 
+                if collect_command is None: 
+                    blockly_running = False 
+                    tutorial_feedback = (
+                        "El dinero esta en el suelo. Agrega 'collect money' y presiona Run." 
+                    )
+                else: 
+                    blockly_commands = [collect_command]
+                    blockly_command_index = 0 
+                    blockly_running = True 
             else:
                 blockly_command_index = 0
 
