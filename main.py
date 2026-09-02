@@ -809,14 +809,16 @@ load_level(0)
 def update_tutorial():
     global tutorial_step
     global tutorial_message
+    global tutorial_feedback 
 
     if current_day != 0: 
         return 
 
-    # player has executed at least 1 blockly command 
+    # player has executed at least 1 blockly command / learn basic movement 
     if tutorial_step == 1: 
         if blockly_command_index > 0: 
             tutorial_step = 2
+            tutorial_feedback = ""
             tutorial_message = (
                 "Excelente! El paletero hizo lo que quisiste. "
                 "Ahora agregar mas bloques para guiar al paletero hacia el cliente."
@@ -828,14 +830,24 @@ def update_tutorial():
         for customer in customers: 
             if customer.distance_to(player) <= 50: 
                 tutorial_step = 3
-                tutorial_message = "Estas lo suficiente cerca para servir al cliente. Ahora necesitas realizar una accion. Agrega un bloque 'Serve the customer' despues de tus bloques de movimento que esta bajo la seccion de Movimiento y presiona Run." 
+                tutorial_feedback = ""
+                tutorial_message = "Llegaste al cliente! Ahora usa una condicion. Agrega el bloque 'if customer nearby' y coloca 'serve customer' dentro de el. Luego presiona Run." 
                 break 
     # customer has been served
     elif tutorial_step == 3: 
-        if len(money_drops) > 0: 
+        if paleta_order_open and paleta_customer is not None: 
+
             tutorial_step = 4
+            tutorial_feedback = ""
+            tutorial_message = (
+                "Muy bien! El cliente hizo su pedido. Observa el sabor de la paleta que quiere. Ahora agrega 'choose paleta flavor' y selecciona el sabor correcto."
+            )
+    elif tutorial_step == 4: 
+        if len(money_drops) > 0: 
+            tutorial_step = 5
+            tutorial_feedback = ""
             tutorial_message = ("Venta completada! El cliente le dejo dinero. Agrega el bloque 'collect money' bajo la seccion de Movimento para recogerlo y presiona Run."
-            "Los programas pueden combinar movimiento y acciones."
+           
             )
 
     # tutorial ends
@@ -893,21 +905,44 @@ def give_tutorial_feedback():
                 "Observa dónde terminó el paletero y modifica tu programa."
             )
 
-    # Player is near customer but has not served
+   # Near customer: condition + serve required
     elif tutorial_step == 3:
-        if blockly_used_serve: 
-            tutorial_feedback = ""
+
+        if not blockly_used_condition:
+            tutorial_feedback = (
+                "Pista: usa 'if customer nearby'. "
+                "Coloca 'serve customer' dentro de la condición."
+            )
+
+        elif not blockly_used_serve:
+            tutorial_feedback = (
+                "Ya tienes la condición. Ahora coloca "
+                "'serve customer' dentro de 'if customer nearby'."
+            )
+
+        else:
+            tutorial_feedback = (
+                "El cliente todavía no ha sido servido. "
+                "Asegúrate de que el paletero esté suficientemente "
+                "cerca cuando se ejecute la condición."
+            )
+
+
+    # Customer order is open: choose flavor
+    elif tutorial_step == 4:
+
         tutorial_feedback = (
-            "Estás cerca del cliente. "
-            "Ahora necesitas una acción: agrega 'serve customer' "
-            "y vuelve a presionar Run."
+            "Lee el pedido en la ventana del cliente. "
+            "Usa 'choose paleta flavor' y selecciona el sabor indicado."
         )
 
+
     # Money exists but has not been collected
-    elif tutorial_step == 4:
+    elif tutorial_step == 5:
+
         tutorial_feedback = (
-            "El dinero todavía está en el suelo. "
-            "Agrega 'collect money' cuando el paletero esté cerca del dinero."
+            "El dinero está en el suelo. "
+            "Usa 'collect money' cuando el paletero esté cerca."
         )
 
     tutorial_feedback_timer = pygame.time.get_ticks()
@@ -1052,7 +1087,7 @@ def reset_current_level():
     global prep_step 
     global prep_message
 
-    global paelta_order_open 
+    global paleta_order_open 
     global paleta_customer
     global paleta_message 
 
@@ -1085,7 +1120,7 @@ def reset_current_level():
     # remove money but keep during tutorial 
     if not (
         current_day == 0
-        and tutorial_step >= 4
+        and tutorial_step >= 5
     ): 
         for money in money_drops[:]: 
             money.delete()
