@@ -99,7 +99,49 @@ Blockly.common.defineBlocksWithJsonArray([
         previousStatement: null, 
         nextStatement: null, 
         colour: 20
-    }
+    }, 
+    {
+        type: 'choose_raspado_flavor', 
+        message0: 'choose raspado flavor %1', 
+        args0: [
+            {
+                type: 'field_dropdown', 
+                name: 'FLAVOR', 
+                options: [
+                    ['vainilla', 'vainilla'], 
+                    ['fresa', 'fresa'], 
+                    ['limon', 'limon'], 
+                    ['chicle azul', 'chicle azul']
+                ]
+            }
+        ], 
+        previousStatement: null, 
+        nextStatement: null, 
+        colour: 20
+    }, 
+
+    {
+        type: 'choose_esquite_ingredient', 
+        message0: 'choose esquite ingredient %1', 
+        args0: [
+            {
+                type: 'field_dropdown', 
+                name: 'FLAVOR', 
+                options: [
+                    ['elote', 'elote'], 
+                    ['mayonesa', 'mayonesa'], 
+                    ['tajin', 'tajin'], 
+                    ['limon', 'limon']
+                ]
+            }
+        ], 
+        previousStatement: null, 
+        nextStatement: null, 
+        colour: 20
+    }, 
+
+    
+
 ]); 
 
 console.log('Condition block:', Blockly.Blocks['if_customer_nearby']); 
@@ -249,6 +291,22 @@ function commandsFromBlock(block){
             const flavor = block.getFieldValue('FLAVOR'); 
             commands.push({
                 type: 'choose_paleta_flavor', 
+                flavor: flavor 
+            }); 
+        }
+
+        else if (block.type === 'choose_raspado_flavor'){
+            const flavor = block.getFieldValue('FLAVOR'); 
+            commands.push({
+                type: 'choose_raspado_flavor', 
+                flavor: flavor 
+            }); 
+        }
+
+        else if (block.type === 'choose_esquite_ingrient'){
+            const flavor = block.getFieldValue('FLAVOR'); 
+            commands.push({
+                type: 'choose_esquite_ingredient', 
                 flavor: flavor 
             }); 
         }
