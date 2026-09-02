@@ -98,7 +98,7 @@ Blockly.common.defineBlocksWithJsonArray([
         ], 
         previousStatement: null, 
         nextStatement: null, 
-        colour: 20, 
+        colour: 20
     }
 ]); 
 
