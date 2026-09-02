@@ -948,13 +948,20 @@ def execute_serve_command():
                 SNACK_DATA[snack]["prep_type"]
             )
             if prep_type == "paleta_flavor": 
-                paleta_customer = customer 
-                paleta_order_open = True 
+                paleta_customer = customer
+                paleta_order_open = True
+
                 paleta_message = (
                     f"El cliente quiere una paleta de {customer.flavor}."
                 )
-                print("Waiting for paleta flavor:", customer.flavor)
-                
+
+                print("================================")
+                print("PALETA POPUP OPEN")
+                print("paleta_order_open:", paleta_order_open)
+                print("paleta_customer:", paleta_customer)
+                print("flavor:", customer.flavor)
+                print("================================")
+
                 return "waiting_for_flavor"
             elif prep_type == "sequence": 
                 prep_open = True 
