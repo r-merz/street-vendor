@@ -1000,12 +1000,23 @@ def execute_serve_command():
                 SNACK_DATA[snack]["prep_type"]
             )
             if prep_type == "paleta_flavor": 
+                # customer's order is already open. 
+                # do not stop blockly again 
+                # allow choose paleta flavor command to execute
+
+                if paleta_customer is customer: 
+                    print(
+                        "Paleta order already pending: ", customer.flavor
+                    )
+                    return "order_already_open"
+                # first time serving customer 
                 paleta_customer = customer
                 paleta_order_open = True
 
                 paleta_message = (
                     f"El cliente quiere una paleta de {customer.flavor}."
                 )
+                
 
                 print("================================")
                 print("PALETA POPUP OPEN")
