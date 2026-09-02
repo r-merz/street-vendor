@@ -114,6 +114,7 @@ current_day = 0
 inventory_open = False
 prep_open = False
 library_open = False
+level_intro_open = True 
 
 prep_message = ""
 inventory_msg = ""
