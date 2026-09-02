@@ -1294,6 +1294,23 @@ def clear_old_blockly_program():
             error
         )
 # game loop 
+
+def find_paleta_flavor_command(commands):
+    for command in commands:
+        if not isinstance(command, dict):
+            continue
+
+        if command.get("type") == "choose_paleta_flavor":
+            return command
+
+        if command.get("type") == "if_customer_nearby":
+            found = find_paleta_flavor_command(
+                command.get("commands", [])
+            )
+            if found is not None:
+                return found
+
+    return None
 async def main(): 
     global day_start_time
     global day_over
@@ -1505,21 +1522,37 @@ async def main():
             and not level_intro_open): # prevent movement while inventory open
                                     # vendor can't drive away while prepping order
             player.update(obstacles) # player stops moving once time runs out 
-        if load_blockly_commands(): 
-            blockly_command_index = 0
-            #blockly_running = True 
+        if load_blockly_commands():
             blockly_last_command_time = 0
 
-            # serving requires an if-customer-nearby condition 
-            if blockly_used_serve and not blockly_used_condition: 
-                blockly_running = False
-                tutorial_feedback = (
-                    "Antes de servir al cleinte, usa el bloque "
-                    "'if customer nearby'. Coloca 'serve customer' "
-                    "dentro de la condicion."
-                )
-            else: 
-                blockly_running = True 
+            # A Paleta order is waiting: do not replay movement.
+            # Run only the new flavor-selection command.
+            if paleta_order_open and paleta_customer is not None:
+                flavor_command = find_paleta_flavor_command(blockly_commands)
+
+                if flavor_command is None:
+                    blockly_running = False
+                    tutorial_feedback = (
+                        "El pedido está abierto. Agrega 'choose paleta flavor' "
+                        "con el sabor correcto y presiona Run."
+                    )
+                else:
+                    blockly_commands = [flavor_command]
+                    blockly_command_index = 0
+                    blockly_running = True
+
+            else:
+                blockly_command_index = 0
+
+                if blockly_used_serve and not blockly_used_condition:
+                    blockly_running = False
+                    tutorial_feedback = (
+                        "Antes de servir al cliente, usa el bloque "
+                        "'if customer nearby'. Coloca 'serve customer' "
+                        "dentro de la condición."
+                    )
+                else:
+                    blockly_running = True
 
         # blockly executor 
         if(
