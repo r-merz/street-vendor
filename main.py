@@ -121,6 +121,8 @@ prep_customer = None
 prep_step = 0
 paleta_customer = None 
 paleta_message = "" 
+paleta_order_open = False 
+
 blockly_debug_message = ""
 print("Loading vendor...")
 PLAYER_START = (
@@ -914,6 +916,7 @@ def execute_serve_command():
     global prep_message
     global paleta_customer
     global paleta_message 
+    global paleta_order_open
 
     print("Serve command received")
 
@@ -947,6 +950,7 @@ def execute_serve_command():
             if prep_type == "paleta_flavor": 
                 global paleta_customer
                 global paleta_message 
+                global paleta_order_open
                 paleta_customer = customer 
                 paleta_message = (
                     f"El cliente quiere una paleta de {customer.flavor}."
@@ -1001,6 +1005,7 @@ def execute_collect_command():
 def execute_paleta_flavor_command(flavor):
     global paleta_customer
     global paleta_message
+    global paleta_order_open
 
     if paleta_customer is None:
         paleta_message = (
@@ -1016,6 +1021,7 @@ def execute_paleta_flavor_command(flavor):
         complete_sale(paleta_customer)
 
         paleta_customer = None
+        paleta_order_open = False 
         return True
 
     paleta_message = (
@@ -1126,6 +1132,9 @@ async def main():
     global prep_customer
     global prep_step
     global prep_message
+    global paleta_order_open 
+    global paleta_customer 
+    global paleta_message 
 
     global blockly_running
     global blockly_command_index
@@ -2445,6 +2454,164 @@ async def main():
             )
 
             game_surface.blit(start_text, start_rect)
+
+        if paleta_order_open and paleta_customer is not None:
+
+            # darken the background slightly
+            overlay = pygame.Surface(
+                (GAME_WIDTH, GAME_HEIGHT),
+                pygame.SRCALPHA
+            )
+
+            overlay.fill(
+                (0, 0, 0, 100)
+            )
+
+            game_surface.blit(
+                overlay,
+                (0, 0)
+            )
+
+            # main customer order panel
+            order_panel = pygame.Rect(
+                180,
+                70,
+                480,
+                300
+            )
+
+            draw_pixel_panel(
+                game_surface,
+                order_panel,
+                background=LIBRARY_BG,
+                border=LIBRARY_BORDER,
+                highlight=LIBRARY_HIGHLIGHT,
+                shadow=LIBRARY_SHADOW
+            )
+
+            # title
+            order_title = title_font.render(
+                "CLIENTE",
+                True,
+                LIBRARY_TEXT
+            )
+
+            order_title_rect = order_title.get_rect(
+                center=(
+                    order_panel.centerx,
+                    order_panel.top + 35
+                )
+            )
+
+            game_surface.blit(
+                order_title,
+                order_title_rect
+            )
+
+            # customer portrait area
+            portrait_rect = pygame.Rect(
+                order_panel.left + 30,
+                order_panel.top + 75,
+                160,
+                140
+            )
+
+            draw_pixel_panel(
+                game_surface,
+                portrait_rect,
+                background=LIBRARY_CARD,
+                border=LIBRARY_BORDER,
+                highlight=LIBRARY_HIGHLIGHT,
+                shadow=LIBRARY_SHADOW
+            )
+
+            # temporarily draw the normal customer sprite larger
+            customer_image = pygame.transform.scale(
+                paleta_customer.image,
+                (
+                    110,
+                    110
+                )
+            )
+
+            customer_rect = customer_image.get_rect(
+                center=portrait_rect.center
+            )
+
+            game_surface.blit(
+                customer_image,
+                customer_rect
+            )
+
+            # order text
+            request_label = font.render(
+                "PIDE:",
+                True,
+                LIBRARY_TEXT
+            )
+
+            game_surface.blit(
+                request_label,
+                (
+                    order_panel.left + 230,
+                    order_panel.top + 90
+                )
+            )
+
+            snack_text = font.render(
+                "Paleta",
+                True,
+                LIBRARY_TEXT
+            )
+
+            game_surface.blit(
+                snack_text,
+                (
+                    order_panel.left + 230,
+                    order_panel.top + 130
+                )
+            )
+
+            flavor_text = title_font.render(
+                paleta_customer.flavor.capitalize(),
+                True,
+                (150, 60, 60)
+            )
+
+            game_surface.blit(
+                flavor_text,
+                (
+                    order_panel.left + 230,
+                    order_panel.top + 165
+                )
+            )
+
+            # instruction / feedback
+            message_lines = wrap_text(
+                paleta_message,
+                small_font,
+                order_panel.width - 60
+            )
+
+            message_y = order_panel.bottom - 65
+
+            for line in message_lines:
+
+                message_text = small_font.render(
+                    line,
+                    True,
+                    LIBRARY_TEXT
+                )
+
+                game_surface.blit(
+                    message_text,
+                    (
+                        order_panel.left + 30,
+                        message_y
+                    )
+                )
+
+                message_y += 18
 
         if current_day == 0 and not level_intro_open and not day_over:
 
