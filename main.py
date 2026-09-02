@@ -1457,48 +1457,37 @@ async def main():
             #     print("Mouse:", pygame.mouse.get_pos())
 
         # update code
-        if (
-            not day_over
-            and not inventory_open
+        if(
+            not day_over 
+            and not inventory_open 
             and not prep_open
             and not library_open
             and not level_intro_open
         ):
             player.update(obstacles)
 
-        if load_blockly_commands():
+        if load_blockly_commands(): 
             blockly_command_index = 0
+            blockly_running = True 
             blockly_last_command_time = 0
 
-            if (
-                blockly_used_serve
-                and not blockly_used_condition
-            ):
-                blockly_running = False
-                tutorial_feedback = (
-                    "Antes de servir al cliente, usa el bloque "
-                    "'if customer nearby'. Coloca 'serve customer' "
-                    "dentro de la condicion."
-                )
-            else:
-                blockly_running = True
-
-        # blockly executor
-        if (
+        # blockly executor 
+        if(
             blockly_running
-            and not day_over
+            and not day_over 
             and not inventory_open
-            and not prep_open
-            and not library_open
+            and not prep_open 
+            and not library_open 
             and not level_intro_open
-        ):
-            current_blockly_time = pygame.time.get_ticks()
+        ): 
+            current_blockly_time = pygame.time.get_ticks() 
 
-            if (
+            if(
                 current_blockly_time - blockly_last_command_time
                 >= BLOCKLY_COMMAND_DELAY
-            ):
+            ): 
                 if blockly_command_index < len(blockly_commands):
+
                     command = blockly_commands[
                         blockly_command_index
                     ]
@@ -1508,98 +1497,109 @@ async def main():
                         command
                     )
 
-                    extra_delay = 0
+                    if command == "reset": 
+                        reset_current_level()
 
-                    if isinstance(command, dict):
+                    else: 
 
-                        if (
-                            command.get("type")
-                            == "if_customer_nearby"
-                        ):
-                            customer_nearby = False
+                        if isinstance(command, dict):
 
-                            for customer in customers:
-                                if (
-                                    not customer.sold
-                                    and customer.distance_to(player) <= 50
-                                ):
-                                    customer_nearby = True
-                                    break
-
-                            print(
-                                "Customer nearby:",
-                                customer_nearby
-                            )
-
-                            if customer_nearby:
-                                nested_commands = command.get(
-                                    "commands",
-                                    []
+                            if (
+                                command.get("type")
+                                == "if_customer_nearby"
+                            ): 
+                                print(
+                                    "Checking if customer is nearby..."
                                 )
 
-                                blockly_commands[
-                                    blockly_command_index + 1:
-                                    blockly_command_index + 1
-                                ] = nested_commands
+                                customer_nearby = False
 
-                        elif (
-                            command.get("type")
-                            == "choose_paleta_flavor"
-                        ):
-                            flavor = command.get(
-                                "flavor"
-                            )
+                                for customer in customers: 
 
-                            execute_paleta_flavor_command(
-                                flavor
-                            )
+                                    distance = customer.distance_to(
+                                        player
+                                    )
 
-                    else:
+                                    print(
+                                        "Customer distance:",
+                                        distance
+                                    )
 
-                        if command == "serve":
-                            serve_result = (
-                                execute_serve_command()
-                            )
+                                    if(
+                                        not customer.sold
+                                        and distance <= 50
+                                    ): 
+                                        customer_nearby = True 
+                                        break 
 
-                            # Keep the customer order visible briefly,
-                            # but do NOT stop the Blockly program.
-                            if (
-                                serve_result
-                                == "waiting_for_flavor"
+                                print(
+                                    "Customer nearby:",
+                                    customer_nearby
+                                )
+
+                                if customer_nearby: 
+
+                                    nested_commands = command.get(
+                                        "commands",
+                                        []
+                                    )
+
+                                    print(
+                                        "Nested commands:",
+                                        nested_commands
+                                    )
+
+                                    blockly_commands[
+                                        blockly_command_index + 1:
+                                        blockly_command_index + 1
+                                    ] = nested_commands
+
+                            elif (
+                                command.get("type")
+                                == "choose_paleta_flavor"
                             ):
-                                extra_delay = 2500
 
-                        elif command == "collect":
-                            execute_collect_command()
+                                flavor = command.get(
+                                    "flavor"
+                                )
 
-                        else:
-                            # Restore the original Blockly movement path.
-                            player.execute_command(
-                                command,
-                                obstacles
-                            )
+                                execute_paleta_flavor_command(
+                                    flavor
+                                )
+
+                        else: 
+
+                            if command == "serve": 
+                                execute_serve_command()
+
+                            elif command == "collect": 
+                                execute_collect_command()
+
+                            else: 
+                                player.execute_command(
+                                    command,
+                                    obstacles
+                                )
 
                     blockly_command_index += 1
 
-                    # Every command advances the executor timer.
                     blockly_last_command_time = (
                         current_blockly_time
-                        + extra_delay
                     )
 
                     if (
                         blockly_command_index
                         >= len(blockly_commands)
-                    ):
+                    ): 
                         blockly_running = False
 
                         if (
                             current_day == 0
                             and not day_over
-                        ):
+                        ): 
                             give_tutorial_feedback()
 
-                else:
+                else: 
                     blockly_running = False
 
         # draw code 
