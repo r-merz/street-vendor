@@ -146,9 +146,10 @@ Blockly.common.defineBlocksWithJsonArray([
                 options: [
                     ['elote', 'elote'], 
                     ['mayonesa', 'mayonesa'], 
+                    ['queso', 'queso'], 
                     ['tajin', 'tajin'], 
                     ['limon', 'limon'], 
-                    ['queso', 'queso']
+                    
                 ]
             }
         ], 
@@ -186,11 +187,11 @@ const toolbox = {
             colour: '45', 
             contents: [
                 {kind: 'block', type: 'serve_customer'}, 
-                {kind: 'block', type: 'collect_money'}
+                {kind: 'block', type: 'collect_money'}, 
+                {kind: 'block', type: 'restock_snack'}
 
             ]
        }, 
-       {kind: 'block', type: 'restock_snack'}, 
        {
             kind: 'category', 
             name: 'Preparation', 
