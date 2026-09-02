@@ -183,7 +183,29 @@ const toolbox = {
                     type: 'choose_paleta_flavor'
                 }
             ]
-       }, 
+       },  
+       {
+            kind: 'category', 
+            name: 'Preparation', 
+            colour: '20', 
+            contents: [
+                {
+                    kind: 'block', 
+                    type: 'choose_raspado_flavor'
+                }
+            ]
+       },  
+       {
+            kind: 'category', 
+            name: 'Preparation', 
+            colour: '20', 
+            contents: [
+                {
+                    kind: 'block', 
+                    type: 'choose_esquite_ingredient'
+                }
+            ]
+       },  
        {
             kind: 'category', 
             name: 'Loops', 
@@ -243,6 +265,7 @@ function updateCommandOutput(){
 }
 
 // recursive section to read nested blocks inside repeat
+
 function commandsFromBlock(block){
     const commands = []; 
     while(block){
