@@ -1052,6 +1052,10 @@ def reset_current_level():
     global prep_step 
     global prep_message
 
+    global paelta_order_open 
+    global paleta_customer
+    global paleta_message 
+
     global inventory_open
     global library_open
 
@@ -1104,6 +1108,11 @@ def reset_current_level():
     prep_step = 0
     prep_message = ""
 
+    # close paleta customer order
+    paleta_order_open = False
+    paleta_customer = None 
+    paleta_message = ""
+
     # reset day 
 
     day_over = False 
@@ -1153,6 +1162,7 @@ async def main():
 
     global tutorial_step
     global tutorial_message
+    global tutorial_feedback
 
     pygame.init()
     clear_old_blockly_program()
@@ -1343,8 +1353,19 @@ async def main():
             player.update(obstacles) # player stops moving once time runs out 
         if load_blockly_commands(): 
             blockly_command_index = 0
-            blockly_running = True 
+            #blockly_running = True 
             blockly_last_command_time = 0
+
+            # serving requires an if-customer-nearby condition 
+            if blockly_used_serve and not blockly_used_condition: 
+                blockly_running = False
+                tutorial_feedback = (
+                    "Antes de servir al cleinte, usa el bloque "
+                    "'if customer nearby'. Coloca 'serve customer' "
+                    "dentro de la condicion."
+                )
+            else: 
+                blockly_running = True 
 
         # blockly executor 
         if(
