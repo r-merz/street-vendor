@@ -6,6 +6,9 @@ A Python/Pygame game about running a neighborhood snack cart, serving customers,
 
 [Play Street Vendor in your browser](https://r-merz.github.io/street-vendor/)
 
+## Combined version (Blockly + Python) 
+https://r-merz.github.io/street-vendor/combined.html 
+
 ## Features
 
 - Multiple levels with increasing difficulty
