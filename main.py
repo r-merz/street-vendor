@@ -1174,6 +1174,34 @@ def execute_restock_command(snack):
     player.profit -= cost
     player.inventory[snack] += 1
     return True
+
+
+def pending_order_type():
+    """Return the Blockly preparation command required by the open order."""
+    if paleta_order_open and paleta_customer is not None:
+        return "choose_paleta_flavor"
+    if raspado_order_open and raspado_customer is not None:
+        return "choose_raspado_flavor"
+    if esquite_order_open and esquite_customer is not None:
+        return "choose_esquite_ingredient"
+    return None
+
+
+def find_commands_by_type(commands, command_type):
+    """Keep preparation commands while preserving their order inside conditions."""
+    found = []
+    for command in commands:
+        if not isinstance(command, dict):
+            continue
+        if command.get("type") == command_type:
+            found.append(command)
+        elif command.get("type") == "if_customer_nearby":
+            found.extend(
+                find_commands_by_type(command.get("commands", []), command_type)
+            )
+    return found
+
+
 # reset blockly button function 
 def reset_current_level(): 
     global blockly_running 
@@ -1189,6 +1217,15 @@ def reset_current_level():
     global paleta_order_open 
     global paleta_customer
     global paleta_message 
+
+    global raspado_customer
+    global raspado_order_open
+    global raspado_message
+
+    global esquite_customer
+    global esquite_order_open
+    global esquite_step
+    global esquite_message
 
     raspado_customer = None
     raspado_order_open = False
@@ -1541,19 +1578,23 @@ async def main():
         if load_blockly_commands():
             blockly_last_command_time = 0
 
-            # A Paleta order is waiting: do not replay movement.
-            # Run only the new flavor-selection command.
-            if paleta_order_open and paleta_customer is not None:
-                flavor_command = find_paleta_flavor_command(blockly_commands)
+            # A customer order is waiting: do not replay movement or serve
+            # commands. Run only the matching preparation command(s).
+            order_command_type = pending_order_type()
+            if order_command_type is not None:
+                preparation_commands = find_commands_by_type(
+                    blockly_commands,
+                    order_command_type
+                )
 
-                if flavor_command is None:
+                if not preparation_commands:
                     blockly_running = False
                     tutorial_feedback = (
-                        "El pedido está abierto. Agrega 'choose paleta flavor' "
-                        "con el sabor correcto y presiona Run."
+                        "El pedido está abierto. Agrega el bloque de preparación "
+                        "correcto y presiona Run."
                     )
                 else:
-                    blockly_commands = [flavor_command]
+                    blockly_commands = preparation_commands
                     blockly_command_index = 0
                     blockly_running = True
             elif money_drops: 
@@ -1562,7 +1603,7 @@ async def main():
                 collect_command = find_collect_command(blockly_commands) 
                 
                 if collect_command is None: # might prevent user from moving 
-                    #blockly_running = False 
+                    blockly_running = False 
                     tutorial_feedback = (
                         "El dinero esta en el suelo. Agrega 'collect money' y presiona Run." 
                     )
@@ -1644,6 +1685,22 @@ async def main():
 
                                     ] = nested_commands
 
+                            elif command.get("type") == "serve_customer":
+                                if command.get("guarded"):
+                                    serve_result = execute_serve_command()
+                                    if serve_result in (
+                                        "waiting_for_flavor",
+                                        "waiting_for_ingredients"
+                                    ):
+                                        blockly_last_command_time = (
+                                            current_blockly_time + 2500
+                                        )
+                                else:
+                                    tutorial_feedback = (
+                                        "Coloca 'serve customer' dentro de "
+                                        "'if customer nearby'."
+                                    )
+
                             elif command.get("type") == "choose_paleta_flavor": 
                                 flavor = command.get("flavor")
                                 execute_paleta_flavor_command(
@@ -1659,19 +1716,15 @@ async def main():
                             elif command.get("type") == "restock_snack": 
                                 execute_restock_command(command.get("snack"))
                         else: 
-                            if command == "serve": 
-                                if not blockly_used_condition: 
-                                    blockly_last_command_time = current_blockly_time 
-                                else: 
-                                    serve_result = execute_serve_command()
-                                if serve_result == "waiting_for_flavor": 
-                                    blockly_last_command_time = (
-                                        current_blockly_time + 2500 
-                                    )
-                                else: 
-                                    blockly_last_command_time = (
-                                        current_blockly_time
-                                    )
+                            if command == "serve":
+                                # Legacy programs from an older Blockly page
+                                # are intentionally not allowed to bypass the
+                                # condition requirement.
+                                tutorial_feedback = (
+                                    "Coloca 'serve customer' dentro de "
+                                    "'if customer nearby'."
+                                )
+                                blockly_last_command_time = current_blockly_time
                             elif command == "collect": 
                                 execute_collect_command()
                             else: 
@@ -1680,6 +1733,10 @@ async def main():
                                     obstacles
                                 )
                         blockly_command_index += 1
+                        # A completed sale drops money.  Stop immediately so
+                        # the vendor cannot move until the collect block runs.
+                        if money_drops:
+                            blockly_running = False
                         #blockly_last_command_time = current_blockly_time
                         # program has finised 
                         if blockly_command_index >= len(blockly_commands): 
@@ -2874,6 +2931,60 @@ async def main():
                 )
 
                 message_y += 18
+
+        # Blockly order panels for the two snack types added after the tutorial.
+        # They make the requested preparation visible before the student runs
+        # the corresponding dropdown block(s).
+        if raspado_order_open or esquite_order_open:
+            if raspado_order_open and raspado_customer is not None:
+                order_customer = raspado_customer
+                order_title_text = "RASPADO"
+                request_text_value = (
+                    f"Sabor solicitado: {order_customer.flavor.capitalize()}"
+                )
+                order_message = raspado_message
+                block_hint = "Usa 'choose raspado flavor' con el sabor correcto."
+                steps_to_show = []
+            else:
+                order_customer = esquite_customer
+                order_title_text = "ESQUITE"
+                request_text_value = "Ingredientes en este orden:"
+                order_message = esquite_message
+                block_hint = "Agrega bloques 'choose esquite ingredient' en orden."
+                steps_to_show = ESQUITE_INGREDIENTS
+
+            if order_customer is not None:
+                overlay = pygame.Surface((GAME_WIDTH, GAME_HEIGHT), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 100))
+                game_surface.blit(overlay, (0, 0))
+
+                order_panel = pygame.Rect(180, 70, 480, 310)
+                draw_pixel_panel(
+                    game_surface, order_panel, background=LIBRARY_BG,
+                    border=LIBRARY_BORDER, highlight=LIBRARY_HIGHLIGHT,
+                    shadow=LIBRARY_SHADOW
+                )
+
+                title = title_font.render(order_title_text, True, LIBRARY_TEXT)
+                game_surface.blit(title, title.get_rect(center=(order_panel.centerx, order_panel.top + 38)))
+
+                request = font.render(request_text_value, True, LIBRARY_TEXT)
+                game_surface.blit(request, (order_panel.left + 38, order_panel.top + 82))
+
+                y = order_panel.top + 120
+                for index, ingredient in enumerate(steps_to_show):
+                    color = (80, 120, 70) if index < esquite_step else LIBRARY_TEXT
+                    label = font.render(
+                        f"{index + 1}. {ingredient.capitalize()}", True, color
+                    )
+                    game_surface.blit(label, (order_panel.left + 70, y))
+                    y += 28
+
+                hint = small_font.render(block_hint, True, LIBRARY_TEXT)
+                game_surface.blit(hint, (order_panel.left + 38, order_panel.bottom - 64))
+                for index, line in enumerate(wrap_text(order_message, small_font, order_panel.width - 76)):
+                    message = small_font.render(line, True, (120, 60, 20))
+                    game_surface.blit(message, (order_panel.left + 38, order_panel.bottom - 40 + index * 18))
 
         if current_day == 0 and not level_intro_open and not day_over:
 

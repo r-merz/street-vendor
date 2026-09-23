@@ -142,7 +142,7 @@ Blockly.common.defineBlocksWithJsonArray([
         args0: [
             {
                 type: 'field_dropdown', 
-                name: 'FLAVOR', 
+                name: 'INGREDIENT', 
                 options: [
                     ['elote', 'elote'], 
                     ['mayonesa', 'mayonesa'], 
@@ -262,7 +262,7 @@ function updateCommandOutput(){
 
 // recursive section to read nested blocks inside repeat
 
-function commandsFromBlock(block){
+function commandsFromBlock(block, insideCustomerCondition = false){
     const commands = []; 
     while(block){
         if (block.type === 'move_up'){
@@ -278,7 +278,13 @@ function commandsFromBlock(block){
             commands.push('right'); 
         }
         else if (block.type === 'serve_customer'){
-            commands.push('serve'); 
+            // Keep the condition context in the command sent to Python.  A
+            // serve block placed outside the condition should give feedback,
+            // never sell an item accidentally.
+            commands.push({
+                type: 'serve_customer',
+                guarded: insideCustomerCondition
+            });
         }
         else if (block.type === 'collect_money'){
             commands.push('collect'); 
@@ -289,7 +295,7 @@ function commandsFromBlock(block){
             const firstChild = 
                 block.getInputTargetBlock('DO'); 
             const innerCommands = 
-                commandsFromBlock(firstChild); 
+                commandsFromBlock(firstChild, insideCustomerCondition); 
             for (let i = 0; i < times; i++){
                 commands.push(
                     ...innerCommands 
@@ -300,7 +306,7 @@ function commandsFromBlock(block){
             const firstChild = 
                 block.getInputTargetBlock('DO'); 
             const innerCommands = 
-                commandsFromBlock(firstChild); 
+                commandsFromBlock(firstChild, true); 
             commands.push({
                 type: 'if_customer_nearby', 
                 commands: innerCommands
@@ -323,7 +329,7 @@ function commandsFromBlock(block){
         }
 
         else if (block.type === 'choose_esquite_ingredient'){
-            const ingredient = block.getFieldValue('FLAVOR'); 
+            const ingredient = block.getFieldValue('INGREDIENT'); 
             commands.push({
                 type: 'choose_esquite_ingredient', 
                 ingredient: ingredient
