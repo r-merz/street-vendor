@@ -564,11 +564,14 @@ def load_blockly_commands():
     global blockly_used_repeat 
     global blockly_used_serve 
 
-    # browser javascript 
-    if platform.system() != "Emscripten": 
-        return False
-    try: 
+    # In Pygbag, capability detection is more reliable than checking the
+    # platform name: the browser bridge supplies platform.window.
+    try:
         window = platform.window
+    except AttributeError:
+        return False
+
+    try: 
         # The Blockly editor and Pygbag game run in sibling iframes.  Read
         # storage from their common parent document; Pygbag's window proxy can
         # otherwise miss values written by the Blockly iframe.
