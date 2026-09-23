@@ -568,8 +568,12 @@ def load_blockly_commands():
     if platform.system() != "Emscripten": 
         return False
     try: 
-        window = platform.window 
-        stored = window.localStorage.getItem(
+        window = platform.window
+        # The Blockly editor and Pygbag game run in sibling iframes.  Read
+        # storage from their common parent document; Pygbag's window proxy can
+        # otherwise miss values written by the Blockly iframe.
+        storage = window.parent.localStorage
+        stored = storage.getItem(
             "streetVendorProgram"
         )
         if not stored: 
@@ -584,7 +588,7 @@ def load_blockly_commands():
         if commands == ['reset']: 
             print("Reset program received")
             reset_current_level()
-            window.localStorage.removeItem(
+            storage.removeItem(
                 "streetVendorProgram"
             )
 
@@ -604,7 +608,7 @@ def load_blockly_commands():
             False 
         )
         # consume the program so it cannot replay after another refresh 
-        window.localStorage.removeItem(
+        storage.removeItem(
             "streetVendorProgram"
         )
 
@@ -613,10 +617,7 @@ def load_blockly_commands():
         last_blockly_program = run_id
         blockly_commands = commands 
 
-        print(
-            "New Blockly program:", 
-            blockly_commands
-        )
+        print("PYTHON FOUND BLOCKLY PROGRAM:", blockly_commands)
         return True 
     except Exception as error: 
         print(
