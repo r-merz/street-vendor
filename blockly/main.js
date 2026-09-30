@@ -354,6 +354,16 @@ function workspaceUsesBlockType(type){
     .getAllBlocks(false)
     .some(block => block.type === type); 
 }
+
+function sendToGame(message) {
+    const frames = window.parent.frames;
+    for (let i = 0; i < frames.length; i++) {
+        if (frames[i] !== window) {
+            frames[i].postMessage(message, '*');
+        }
+    }
+    console.log('Sent to game:', message);
+}
 // run button handler 
 document
     .getElementById('runButton')
@@ -369,10 +379,7 @@ document
             usedServe: workspaceUsesBlockType('serve_customer')
         }; 
         // use local storage to save commands
-        localStorage.setItem(
-            'streetVendorProgram', 
-            JSON.stringify(program) 
-        ); 
+        sendToGame({ type: 'streetVendorProgram', program: program });
         updateCommandOutput(); 
         console.log('Saved Blockly program:', program); 
         
@@ -389,9 +396,18 @@ document
             usedCondition: false, 
             usedServe: false
         }; 
-        localStorage.setItem(
-            'streetVendorProgram', 
-            JSON.stringify(program)
-        ); 
+        sendToGame({ type: 'streetVendorProgram', program: program });
         console.log('Reset game:', program); 
     }); 
+
+window.addEventListener('keydown', (e) => {
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    const key = e.key.toLowerCase();
+    if (key === 'i' || key === 'l') {
+        sendToGame({
+            type: 'streetVendorProgram',
+            program: { runId: Date.now(), commands: ['toggle_' + key] }
+        });
+    }
+});

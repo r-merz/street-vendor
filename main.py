@@ -1,3 +1,5 @@
+print("BUILD 2026-09-30-B")
+
 import pygame
 import asyncio # web demo 
 import platform # connect pygame ot localStorage 
@@ -557,77 +559,70 @@ snack_icons = {
     "raspado": pygame.transform.scale(raspado_image, (24, 24))
 }
 
-def load_blockly_commands(): 
-    global blockly_commands
-    global last_blockly_program
-    global blockly_used_condition
-    global blockly_used_repeat 
-    global blockly_used_serve 
+def install_bridge():
+    try:
+        platform.window.eval(
+            "window.svProgram = null;"
+            "window.addEventListener('message', function(e) {"
+            "  if (e.data && e.data.type === 'streetVendorProgram') {"
+            "    window.svProgram = JSON.stringify(e.data.program);"
+            "  }"
+            "});"
+        )
+        print("[bridge] listener installed")
+    except Exception as error:
+        print("[bridge] install failed:", error)
 
-    # In Pygbag, capability detection is more reliable than checking the
-    # platform name: the browser bridge supplies platform.window.
+
+def load_blockly_commands():
+    global blockly_commands, last_blockly_program
+    global blockly_used_condition, blockly_used_repeat, blockly_used_serve
+    global inventory_open, library_open
+
     try:
         window = platform.window
-    except AttributeError:
+        raw = window.svProgram
+    except Exception:
         return False
 
-    try: 
-        # The Blockly editor and Pygbag game run in sibling iframes.  Read
-        # storage from their common parent document; Pygbag's window proxy can
-        # otherwise miss values written by the Blockly iframe.
-        storage = window.parent.localStorage
-        stored = storage.getItem(
-            "streetVendorProgram"
-        )
-        if not stored: 
-            return False 
-        stored = str(stored)
+    if raw is None or str(raw) in ("", "null", "None", "undefined"):
+        return False
 
-        program = json.loads(stored) 
+    window.eval("window.svProgram = null")  # consume it
+
+    try:
+        program = json.loads(str(raw))
         run_id = program["runId"]
         commands = program["commands"]
+        print("[bridge] received:", commands)
 
-        # handle reset immediately 
-        if commands == ['reset']: 
-            print("Reset program received")
-            reset_current_level()
-            storage.removeItem(
-                "streetVendorProgram"
-            )
-
-            last_blockly_program = run_id
-
-            return False 
-        blockly_used_repeat = program.get(
-            "usedRepeat", 
-            False 
-        )
-        blockly_used_condition = program.get(
-            "usedCondition", 
-            False 
-        )
-        blockly_used_serve = program.get(
-            "usedServe", 
-            False 
-        )
-        # consume the program so it cannot replay after another refresh 
-        storage.removeItem(
-            "streetVendorProgram"
-        )
-
-        if run_id == last_blockly_program: 
+        if commands == ['toggle_i']:
+            if not library_open and not prep_open:
+                inventory_open = not inventory_open
             return False
-        last_blockly_program = run_id
-        blockly_commands = commands 
+        if commands == ['toggle_l']:
+            if not inventory_open and not prep_open:
+                library_open = not library_open
+            return False
 
+        if commands == ['reset']:
+            reset_current_level()
+            last_blockly_program = run_id
+            return False
+
+        if run_id == last_blockly_program:
+            return False
+
+        blockly_used_repeat = program.get("usedRepeat", False)
+        blockly_used_condition = program.get("usedCondition", False)
+        blockly_used_serve = program.get("usedServe", False)
+        last_blockly_program = run_id
+        blockly_commands = commands
         print("PYTHON FOUND BLOCKLY PROGRAM:", blockly_commands)
-        return True 
-    except Exception as error: 
-        print(
-            "Could not load Blockly commands:", 
-            error
-        )
-        return False 
+        return True
+    except Exception as error:
+        print("Could not load Blockly commands:", error)
+        return False
 def draw_inventory_card(
     screen, 
     x, 
@@ -1384,6 +1379,7 @@ async def main():
     global paleta_message 
 
     global blockly_running
+    global blockly_commands
     global blockly_command_index
     global blockly_last_command_time
     global last_blockly_program
@@ -1393,7 +1389,7 @@ async def main():
     global tutorial_feedback
 
     pygame.init()
-    clear_old_blockly_program()
+    install_bridge()
 
     running = True
     while running: 
@@ -1753,11 +1749,12 @@ async def main():
                                     obstacles
                                 )
                         blockly_command_index += 1
+
                         # A completed sale drops money.  Stop immediately so
                         # the vendor cannot move until the collect block runs.
                         if money_drops:
                             blockly_running = False
-                        #blockly_last_command_time = current_blockly_time
+                        blockly_last_command_time = max(blockly_last_command_time, current_blockly_time)
                         # program has finised 
                         if blockly_command_index >= len(blockly_commands): 
                             blockly_running = False
