@@ -1567,7 +1567,19 @@ async def main():
             elif event.type == pygame.KEYUP: 
                 input.keys_down.discard(event.key)
             # show coordinates when clicking on screen to determine collision blocks
-            # elif event.type == pygame.MOUSEBUTTONDOWN: 
+            elif event.type == pygame.MOUSEBUTTONDOWN: 
+                if level_intro_open: 
+                    level_intro_open = False 
+                    day_start_time = pygame.time.get_ticks()
+
+                # restart and next level 
+                elif day_over: 
+                    if player.profit >= PROFIT_GOAL: 
+                        if current_day < max(LEVEL_DATA): 
+                            start_next_day()
+
+                    else: 
+                        reset_current_level()
             #     print("Mouse:", pygame.mouse.get_pos())
 
         # update code
@@ -1580,6 +1592,10 @@ async def main():
                                     # vendor can't drive away while prepping order
             player.update(obstacles) # player stops moving once time runs out 
         if load_blockly_commands():
+            # dismiss intro when program arrives and on a mouse click 
+            if level_intro_open: 
+                level_intro_open = False 
+                day_start_time = pygame.time.get_ticks()
             blockly_last_command_time = 0
 
             # A customer order is waiting: do not replay movement or serve
